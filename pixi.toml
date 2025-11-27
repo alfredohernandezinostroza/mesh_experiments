@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Alfredo Hernandez <alfredo.hernandez@ug.uchile.cl>"]
+channels = ["conda-forge"]
+name = "mesh-experiments"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.13.*"
+ipykernel = ">=7.1.0,<8"
+
+[pypi-dependencies]
+pymedx = ">=0.5.1, <0.6"
+metapub = ">=0.6.4, <0.7"

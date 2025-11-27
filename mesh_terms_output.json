@@ -1,0 +1,193 @@
+{
+  "pmid": "9698575",
+  "title": "The time course of changes during motor sequence learning: a whole-brain fMRI study.",
+  "authors": [
+    "Toni I",
+    "Krams M",
+    "Turner R",
+    "Passingham RE"
+  ],
+  "journal": "Neuroimage",
+  "year": "1998",
+  "doi": "10.1006/nimg.1998.0349",
+  "mesh_terms": {
+    "D000328": {
+      "descriptor_name": "Adult",
+      "descriptor_major_topic": false,
+      "qualifiers": []
+    },
+    "D001143": {
+      "descriptor_name": "Arousal",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D001479": {
+      "descriptor_name": "Basal Ganglia",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D001921": {
+      "descriptor_name": "Brain",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": true
+        }
+      ]
+    },
+    "D001931": {
+      "descriptor_name": "Brain Mapping",
+      "descriptor_major_topic": true,
+      "qualifiers": []
+    },
+    "D002531": {
+      "descriptor_name": "Cerebellum",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D004292": {
+      "descriptor_name": "Dominance, Cerebral",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D005260": {
+      "descriptor_name": "Female",
+      "descriptor_major_topic": false,
+      "qualifiers": []
+    },
+    "D006801": {
+      "descriptor_name": "Humans",
+      "descriptor_major_topic": false,
+      "qualifiers": []
+    },
+    "D007091": {
+      "descriptor_name": "Image Processing, Computer-Assisted",
+      "descriptor_major_topic": false,
+      "qualifiers": []
+    },
+    "D008279": {
+      "descriptor_name": "Magnetic Resonance Imaging",
+      "descriptor_major_topic": true,
+      "qualifiers": []
+    },
+    "D008875": {
+      "descriptor_name": "Middle Aged",
+      "descriptor_major_topic": false,
+      "qualifiers": []
+    },
+    "D009044": {
+      "descriptor_name": "Motor Cortex",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D009048": {
+      "descriptor_name": "Motor Skills",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": true
+        }
+      ]
+    },
+    "D010101": {
+      "descriptor_name": "Oxygen Consumption",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": true
+        }
+      ]
+    },
+    "D010296": {
+      "descriptor_name": "Parietal Lobe",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D017397": {
+      "descriptor_name": "Prefrontal Cortex",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D011597": {
+      "descriptor_name": "Psychomotor Performance",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": false
+        }
+      ]
+    },
+    "D011930": {
+      "descriptor_name": "Reaction Time",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": true
+        }
+      ]
+    },
+    "D012691": {
+      "descriptor_name": "Serial Learning",
+      "descriptor_major_topic": false,
+      "qualifiers": [
+        {
+          "qualifier_name": "physiology",
+          "qualifier_ui": "Q000502",
+          "qualifier_major_topic": true
+        }
+      ]
+    }
+  }
+}
