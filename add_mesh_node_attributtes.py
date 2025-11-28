@@ -15,7 +15,7 @@ def extract_pmid_from_doi(doi):
 def get_mesh_terms(fetch, title, author=None, doi=None, max_retries=3):
     """
     Retrieve MeSH terms for a paper by searching PubMed
-    Returns a comma-separated string of MeSH terms
+    Returns a tuple of (mesh_terms_string, mesh_ids_string)
     """
     for attempt in range(max_retries):
         try:
@@ -50,21 +50,35 @@ def get_mesh_terms(fetch, title, author=None, doi=None, max_retries=3):
                                 
                                 if overlap > 0.7:  # 70% word overlap threshold
                                     if hasattr(article, 'mesh') and article.mesh:
-                                        # Extract descriptor names from MeSH terms
-                                        mesh_list = []
-                                        for term in article.mesh:
-                                            if isinstance(term, dict):
-                                                descriptor = term.get('descriptor_name', '')
-                                                if descriptor:
-                                                    mesh_list.append(descriptor)
-                                            elif isinstance(term, str):
-                                                mesh_list.append(term)
+                                        # Extract descriptor names and IDs from MeSH terms
+                                        mesh_terms = []
+                                        mesh_ids = []
                                         
-                                        if mesh_list:
-                                            return ', '.join(mesh_list)
+                                        for key, value in article.mesh.items():
+                                            descriptor_ui = key
+                                            descriptor = article.mesh[key].get('descriptor_name', '')
+                                            if descriptor:
+                                                mesh_terms.append(descriptor)
+                                            if descriptor_ui:
+                                                mesh_ids.append(descriptor_ui)
+                                            # if isinstance(term, dict):
+                                            #     # Get the descriptor name (e.g., "Motor Cortex")
+                                            #     descriptor = term.get('descriptor_name', '')
+                                            #     # Get the unique ID (e.g., "D009044")
+                                            #     descriptor_ui = term.get('descriptor_ui', '')
+                                                
+                                            #     if descriptor:
+                                            #         mesh_terms.append(descriptor)
+                                            #     if descriptor_ui:
+                                            #         mesh_ids.append(descriptor_ui)
+                                            # elif isinstance(term, str):
+                                            #     mesh_terms.append(term)
+                                        
+                                        if mesh_terms:
+                                            return (', '.join(mesh_terms), ', '.join(mesh_ids))
             
-            # If no results, return empty string
-            return ''
+            # If no results, return empty strings
+            return ('', '')
             
         except Exception as e:
             if attempt < max_retries - 1:
@@ -72,9 +86,9 @@ def get_mesh_terms(fetch, title, author=None, doi=None, max_retries=3):
                 continue
             else:
                 print(f"Error retrieving MeSH terms for '{title[:50]}...': {str(e)}")
-                return ''
+                return ('', '')
     
-    return ''
+    return ('', '')
 
 def process_csv_with_mesh(input_file, output_file=None, errors_file=None, 
                           start_row=0, end_row=None, checkpoint_frequency=100):
@@ -99,14 +113,16 @@ def process_csv_with_mesh(input_file, output_file=None, errors_file=None,
     
     # Read the CSV file
     print(f"Reading CSV file: {input_file}")
-    df = pd.read_csv(input_file, sep=',')
+    df = pd.read_csv(input_file, sep=',')  # Changed from '\t' to ','
     
     print(f"Loaded {len(df)} papers")
     print(f"Columns: {list(df.columns)}")
     
-    # Add MeSH terms column if it doesn't exist
+    # Add MeSH columns if they don't exist
     if 'MESH' not in df.columns:
         df['MESH'] = ''
+    if 'MESH_ID' not in df.columns:
+        df['MESH_ID'] = ''
     
     # Initialize PubMed fetcher
     fetch = PubMedFetcher()
@@ -148,9 +164,10 @@ def process_csv_with_mesh(input_file, output_file=None, errors_file=None,
         author = df.loc[idx, 'Author'] if 'Author' in df.columns else ''
         doi = df.loc[idx, 'Doi'] if 'Doi' in df.columns else ''
         
-        # Get MeSH terms
-        mesh_terms = get_mesh_terms(fetch, title, author, doi)
+        # Get MeSH terms and IDs
+        mesh_terms, mesh_ids = get_mesh_terms(fetch, title, author, doi)
         df.loc[idx, 'MESH'] = mesh_terms
+        df.loc[idx, 'MESH_ID'] = mesh_ids
         
         processed_count += 1
         if mesh_terms:
@@ -167,10 +184,10 @@ def process_csv_with_mesh(input_file, output_file=None, errors_file=None,
         
         # Checkpoint save
         if processed_count % checkpoint_frequency == 0:
-            df.to_csv(output_file, sep=',', index=False)
+            df.to_csv(output_file, sep=',', index=False)  # Changed from '\t' to ','
             # Also save errors at checkpoint
             if error_rows:
-                pd.DataFrame(error_rows).to_csv(errors_file, sep=',', index=False)
+                pd.DataFrame(error_rows).to_csv(errors_file, sep=',', index=False)  # Changed from '\t' to ','
             print(f"  → Checkpoint saved to {output_file}")
             if error_rows:
                 print(f"  → Errors saved to {errors_file} ({len(error_rows)} papers without MeSH)")
@@ -179,12 +196,12 @@ def process_csv_with_mesh(input_file, output_file=None, errors_file=None,
         time.sleep(0.35)
     
     # Final save
-    df.to_csv(output_file, sep=',', index=False)
+    df.to_csv(output_file, sep=',', index=False)  # Changed from '\t' to ','
     
     # Save all papers without MeSH terms to errors.csv
     if error_rows:
         errors_df = pd.DataFrame(error_rows)
-        errors_df.to_csv(errors_file, sep=',', index=False)
+        errors_df.to_csv(errors_file, sep=',', index=False)  # Changed from '\t' to ','
         print(f"\n{len(error_rows)} papers without MeSH terms saved to: {errors_file}")
     
     print(f"\n{'='*70}")
@@ -202,17 +219,22 @@ def process_csv_with_mesh(input_file, output_file=None, errors_file=None,
 # Example usage
 if __name__ == "__main__":
     # Configuration
-    INPUT_FILE = "node_attributes_moved_8394.csv"  # Replace with your file path
+    INPUT_FILE = "node_attributes.csv"  # Replace with your file path
+    # INPUT_FILE = "node_attributes_moved_8394.csv"  # Replace with your file path
     
     # For testing on first 100 papers:
-    df = process_csv_with_mesh(INPUT_FILE, end_row=10)
+    # df = process_csv_with_mesh(INPUT_FILE, end_row=10)
     
     # For processing all papers:
-    # df = process_csv_with_mesh(INPUT_FILE)
+    df = process_csv_with_mesh(INPUT_FILE)
     
     # For resuming from row 5000:
     # df = process_csv_with_mesh(INPUT_FILE, start_row=5000)
     
     # Display sample results
     print("\nSample of papers with MeSH terms:")
-    print(df[df['MESH'] != ''][['Label', 'MESH']].head(10))
+    sample_df = df[df['MESH'] != ''][['Label', 'MESH', 'MESH_ID']].head(10)
+    if not sample_df.empty:
+        print(sample_df.to_string())
+    else:
+        print("No papers with MeSH terms found yet.")
