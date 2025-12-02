@@ -2,7 +2,7 @@
 authors = ["Alfredo Hernandez <alfredo.hernandez@ug.uchile.cl>"]
 channels = ["conda-forge"]
 name = "mesh-experiments"
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
@@ -10,7 +10,10 @@ version = "0.1.0"
 [dependencies]
 python = "3.13.*"
 ipykernel = ">=7.1.0,<8"
+matplotlib = ">=3.10.8,<4"
 
 [pypi-dependencies]
 pymedx = ">=0.5.1, <0.6"
 metapub = ">=0.6.4, <0.7"
+pandas = ">=2.3.3, <3"
+networkx = ">=3.6, <4"
