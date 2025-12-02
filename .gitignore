@@ -2,6 +2,7 @@
 .pixi/*
 !.pixi/config.toml
 mesh_histograms/
+keywords_histograms/
 node_attributes_with_mesh.csv
 node_attributes.csv
 node_attributes.csv_errors.csv
@@ -10,3 +11,9 @@ backups/node_attributes_with_mesh_backup.csv
 tests/node_attributes_moved_8394_with_mesh.csv
 tests/node_attributes_moved_8394.csv
 tests/node_attributes_moved_8394.csv_errors.csv
+backups/filtered.gexf_with_transferred_mesh_backup.gexf
+filtered_with_transferred_mesh.gexf
+.gitignore
+mesh_histograms.zip
+filtered.gexf
+filtered_with_transferred_mesh_fixed.gexf
