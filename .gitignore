@@ -1,3 +1,12 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+mesh_histograms/
+node_attributes_with_mesh.csv
+node_attributes.csv
+node_attributes.csv_errors.csv
+unmatched_nodes.csv
+backups/node_attributes_with_mesh_backup.csv
+tests/node_attributes_moved_8394_with_mesh.csv
+tests/node_attributes_moved_8394.csv
+tests/node_attributes_moved_8394.csv_errors.csv
