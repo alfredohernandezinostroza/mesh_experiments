@@ -149,6 +149,19 @@ def split_keywords(keywords_value: str):
     return parts
 
 
+def normalize_plural(keyword: str) -> str:
+    """Normalize a keyword by removing trailing 's' if singular/plural differ only by 's'.
+    
+    E.g., 'models' -> 'model', 'skill' -> 'skill'
+    Prefers the longer form as canonical (singular).
+    """
+    if keyword.endswith('s') and len(keyword) > 1:
+        singular = keyword[:-1]
+        # assume singular form is canonical
+        return singular
+    return keyword
+
+
 def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
     G = nx.read_gexf(gexf_path)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -179,6 +192,8 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         terms = split_keywords(keywords)
         # normalize keywords to lowercase for counting (case-insensitive counts)
         normalized_terms = [t.lower() for t in terms]
+        # further normalize plural/singular forms
+        normalized_terms = [normalize_plural(t) for t in normalized_terms]
         class_keyword_counts[cls_int].update(normalized_terms)
 
     # Iterate over modularity mapping (only those present in the graph)
