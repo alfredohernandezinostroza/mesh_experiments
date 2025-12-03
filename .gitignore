@@ -17,3 +17,10 @@ filtered_with_transferred_mesh.gexf
 mesh_histograms.zip
 filtered.gexf
 filtered_with_transferred_mesh_fixed.gexf
+MeSH_complete.csv
+errors.txt
+filtered_with_transferred_mesh_fixed_fix_commas.gexf
+keywords_histograms_old.zip
+keywords_histograms.zip
+mesh_histograms_old.zip
+gexf_mesh_fix_logs.csv
