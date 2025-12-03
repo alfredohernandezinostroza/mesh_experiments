@@ -24,3 +24,9 @@ keywords_histograms_old.zip
 keywords_histograms.zip
 mesh_histograms_old.zip
 gexf_mesh_fix_logs.csv
+keywords_histograms_old/
+all_keywords_count_old.csv
+all_keywords_count_old.png
+all_keywords_count.csv
+all_keywords_count.png
+keyword_classification_25_categories.csv
