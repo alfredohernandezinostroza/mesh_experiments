@@ -101,7 +101,10 @@ def detect_modularity_attribute(G: nx.Graph):
 
 
 def split_keywords(keywords_value: str):
-    """Split a keywords string into individual keywords. Returns list of cleaned keywords."""
+    """Split a keywords string into individual keywords. Returns list of cleaned keywords.
+    
+    Keywords are split only by commas that are NOT inside parentheses or square brackets.
+    """
     if keywords_value is None:
         return []
     if pd.isna(keywords_value):
@@ -109,8 +112,40 @@ def split_keywords(keywords_value: str):
     s = str(keywords_value).strip()
     if not s:
         return []
-    parts = re.split(r"\s*;+\s*|\s*\|+\s*|\s*,\s*", s)
-    parts = [p.strip() for p in parts if p.strip()]
+    
+    # Split by commas that are not inside parentheses or square brackets
+    parts = []
+    current = []
+    paren_depth = 0
+    bracket_depth = 0
+    for char in s:
+        if char == '(':
+            paren_depth += 1
+            current.append(char)
+        elif char == ')':
+            paren_depth -= 1
+            current.append(char)
+        elif char == '[':
+            bracket_depth += 1
+            current.append(char)
+        elif char == ']':
+            bracket_depth -= 1
+            current.append(char)
+        elif char == ',' and paren_depth == 0 and bracket_depth == 0:
+            # this is a delimiter comma
+            part = ''.join(current).strip()
+            if part:
+                parts.append(part)
+            current = []
+        else:
+            current.append(char)
+    
+    # add remaining part
+    if current:
+        part = ''.join(current).strip()
+        if part:
+            parts.append(part)
+    
     return parts
 
 
@@ -142,7 +177,9 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         seen_classes.add(cls_int)
         keywords = data.get("keywords") or data.get("Keywords") or data.get("KEYWORDS")
         terms = split_keywords(keywords)
-        class_keyword_counts[cls_int].update(terms)
+        # normalize keywords to lowercase for counting (case-insensitive counts)
+        normalized_terms = [t.lower() for t in terms]
+        class_keyword_counts[cls_int].update(normalized_terms)
 
     # Iterate over modularity mapping (only those present in the graph)
     for cls, meta in MODULARITY_META.items():
@@ -155,9 +192,10 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
             print(f"No keywords found for class {cls}, skipping plot")
             continue
 
-        # Save full counts to CSV
+        # Save full counts to CSV (format keywords in Title Case for presentation)
         csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(meta['label'])}.csv"
         df = pd.DataFrame(counts.most_common(), columns=["keyword", "count"]) 
+        df["keyword"] = df["keyword"].str.title()
         df.to_csv(csv_path, index=False)
 
         # Plot top N
@@ -187,6 +225,7 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         label = f"Modularity_{cls}"
         csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(label)}.csv"
         df = pd.DataFrame(counts.most_common(), columns=["keyword", "count"]) 
+        df["keyword"] = df["keyword"].str.title()
         df.to_csv(csv_path, index=False)
         top = df.head(top_n)
         labels = top['keyword'].tolist()[::-1]
@@ -205,14 +244,15 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
     all_keywords = set()
     for counts in class_keyword_counts.values():
         all_keywords.update(counts.keys())
-    
+
+    # present QA keywords in Title Case
     all_keywords_sorted = sorted(all_keywords)
     qa_path = out_dir / "all_keywords_processed.txt"
     with open(qa_path, 'w') as f:
         f.write(f"Total unique keywords processed: {len(all_keywords_sorted)}\n")
         f.write("=" * 80 + "\n\n")
         for kw in all_keywords_sorted:
-            f.write(f"{kw}\n")
+            f.write(f"{kw.title()}\n")
     print(f"\nQA report saved to: {qa_path}")
 
 
