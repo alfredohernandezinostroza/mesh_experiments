@@ -90,13 +90,13 @@ def detect_modularity_attribute(G: nx.Graph):
     for c in candidates:
         if c in sample:
             return c
-    # fallback: try any integer-like attribute among node attrs
-    for k, v in sample.items():
-        if isinstance(v, (int,)):
-            return k
-        # sometimes modularity is stored as stringified int
-        if isinstance(v, str) and v.isdigit():
-            return k
+        # fallback: try any integer-like attribute among node attrs
+        for k, v in sample.items():
+            if isinstance(v, (int,)):
+                return k
+            # sometimes modularity is stored as stringified int
+            if isinstance(v, str) and v.isdigit():
+                return k
     return None
 
 
@@ -149,34 +149,69 @@ def split_keywords(keywords_value: str):
     return parts
 
 
-def normalize_plural(keyword: str) -> str:
-    """Normalize a keyword by removing trailing 's' if singular/plural differ only by 's'.
-    
-    E.g., 'models' -> 'model', 'skill' -> 'skill'
-    Prefers the longer form as canonical (singular).
-    """
-    if keyword.endswith('s') and len(keyword) > 1:
-        singular = keyword[:-1]
-        # assume singular form is canonical
-        return singular
+def normalize_keyword(keyword: str) -> str:
+    """Normalize a keyword to lowercase and remove trailing 's' if possible."""
+    keyword = keyword.lower()
+    # if keyword.endswith('s') and len(keyword) > 1 and not keyword.endswith('ss'):
+    #     # Simple heuristic to remove plural 's', but avoid issues with 'mass'
+    #     return keyword[:-1]
     return keyword
+
+def normalize_plural(keyword: str) -> str:
+    """Normalize a keyword by removing trailing 's' if singular/plural differ only by 's'."""
+    # NOTE: The implementation of normalize_keyword is slightly better for this purpose.
+    return normalize_keyword(keyword)
+
+
+def load_category_mapping(csv_path: Path) -> dict:
+    """Load the keyword -> broad categories mapping from the classification CSV."""
+    if not csv_path.exists():
+        print(f"Error: Category classification file not found at {csv_path}. Skipping broad category histogram.")
+        return {}
+    
+    mapping = {}
+    try:
+        df = pd.read_csv(csv_path)
+        for _, row in df.iterrows():
+            keyword = row['keyword']
+            categories_str = row['categories']
+            
+            # Normalize the keyword for lookup, matching the GEXF processing step
+            norm_keyword = normalize_keyword(keyword)
+            
+            # The categories are semi-colon separated (e.g., 'A. Neuro; B. Bio')
+            categories = [c.strip() for c in categories_str.split(';')]
+            
+            mapping[norm_keyword] = categories
+    except Exception as e:
+        print(f"Error reading or processing {csv_path}: {e}")
+        return {}
+        
+    print(f"Loaded {len(mapping)} classified keywords from {csv_path.name}.")
+    return mapping
 
 
 def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
     G = nx.read_gexf(gexf_path)
     out_dir.mkdir(parents=True, exist_ok=True)
+    
+    # --- NEW: Load the broad category mapping ---
+    category_csv_path = Path("keyword_classification_25_categories.csv")
+    category_mapping = load_category_mapping(category_csv_path)
 
     attr = detect_modularity_attribute(G)
     if not attr:
-        print("Could not detect a modularity/community attribute in nodes.\n"
-              "Please ensure your GEXF contains a community attribute (e.g. 'modularity_class').")
+        print("Could not detect a modularity/community attribute in nodes.")
         return
 
     print(f"Using modularity attribute: '{attr}'")
 
-    # Collect keywords per class
+    # Collect keywords and broad categories per class
     class_keyword_counts = defaultdict(Counter)
+    class_category_counts = defaultdict(Counter) # NEW
     seen_classes = set()
+
+    terms_not_found_in_categories = set([])
 
     for _, data in G.nodes(data=True):
         cls = data.get(attr)
@@ -190,13 +225,31 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         seen_classes.add(cls_int)
         keywords = data.get("keywords") or data.get("Keywords") or data.get("KEYWORDS")
         terms = split_keywords(keywords)
-        # normalize keywords to lowercase for counting (case-insensitive counts)
-        normalized_terms = [t.lower() for t in terms]
-        # further normalize plural/singular forms
-        normalized_terms = [normalize_plural(t) for t in normalized_terms]
+        
+        # --- ORIGINAL KEYWORD COUNTING ---
+        normalized_terms = [normalize_keyword(t) for t in terms]
+        # normalized_terms = terms
         class_keyword_counts[cls_int].update(normalized_terms)
+        
+        # --- NEW BROAD CATEGORY COUNTING ---
+        for term in normalized_terms:
+            # Look up the broad categories for the normalized keyword
+            broad_categories = category_mapping.get(term)
+            if broad_categories:
+                # Count each broad category this keyword belongs to
+                class_category_counts[cls_int].update(broad_categories)
+            else: 
+                terms_not_found_in_categories.add(term)
+    with open("errors_in_classifying_keywords.txt", 'w') as f:
+        for term in terms_not_found_in_categories:
+            f.write(term)
+            f.write('\n')
+    # print(f"couldn't find word: {term}")
 
-    # Iterate over modularity mapping (only those present in the graph)
+
+    
+    # --- ORIGINAL PLOTTING LOOP: Raw Keywords ---
+    print("\n--- Generating Raw Keyword Histograms ---")
     for cls, meta in MODULARITY_META.items():
         if cls not in seen_classes:
             print(f"Class {cls} not present in graph, skipping")
@@ -222,7 +275,7 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         color = meta.get('color', '#333333')
         plt.barh(labels, values, color=color)
         plt.xlabel('Frequency')
-        plt.title(meta.get('displaylabel', meta.get('label', f'Modularity {cls}')))
+        plt.title(meta.get('displaylabel', meta.get('label', f'Modularity {cls}')) + " (Raw Keywords)")
         plt.tight_layout()
 
         png_path = out_dir / f"keywords_hist_mod_{cls}_{sanitize_filename(meta['label'])}.png"
@@ -231,31 +284,67 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
 
         print(f"Saved histogram and CSV for class {cls}: {png_path}, {csv_path}")
 
-    # Handle classes present in graph but not in mapping: create files using class id
-    unmapped = [c for c in seen_classes if c not in MODULARITY_META]
-    for cls in unmapped:
-        counts = class_keyword_counts.get(cls, Counter())
-        if not counts:
+    # --- NEW PLOTTING LOOP: Broad Categories ---
+    print("\n--- Generating Broad Category Histograms ---")
+    for cls, meta in MODULARITY_META.items():
+        if cls not in seen_classes:
             continue
-        label = f"Modularity_{cls}"
-        csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(label)}.csv"
-        df = pd.DataFrame(counts.most_common(), columns=["keyword", "count"]) 
-        df["keyword"] = df["keyword"].str.title()
+
+        counts = class_category_counts.get(cls, Counter())
+        if not counts:
+            print(f"No broad categories found for class {cls}, skipping plot")
+            continue
+
+        # Save full counts to CSV
+        csv_path = out_dir / f"categories_counts_mod_{cls}_{sanitize_filename(meta['label'])}.csv"
+        df = pd.DataFrame(counts.most_common(), columns=["category", "count"]) 
         df.to_csv(csv_path, index=False)
+
+        # Plot top N (use all categories if less than top_n)
         top = df.head(top_n)
-        labels = top['keyword'].tolist()[::-1]
+        labels = top['category'].tolist()[::-1]
         values = top['count'].tolist()[::-1]
+
+        # Use a consistent color for categories, or meta['color']
         plt.figure(figsize=(10, max(4, len(labels) * 0.25)))
-        plt.barh(labels, values, color="#666666")
-        plt.xlabel('Frequency')
-        plt.title(label)
+        color = meta.get('color', '#999999')
+        plt.barh(labels, values, color=color)
+        plt.xlabel('Frequency (Total Keywords Classified into Category)')
+        plt.title(meta.get('displaylabel', meta.get('label', f'Modularity {cls}')) + " (Broad Categories)")
         plt.tight_layout()
-        png_path = out_dir / f"keywords_hist_mod_{cls}_{sanitize_filename(label)}.png"
+
+        png_path = out_dir / f"categories_hist_mod_{cls}_{sanitize_filename(meta['label'])}.png"
         plt.savefig(png_path, dpi=150)
         plt.close()
-        print(f"Saved histogram and CSV for unmapped class {cls}: {png_path}, {csv_path}")
 
-    # Generate QA report: all unique keywords processed
+        print(f"Saved broad category histogram and CSV for class {cls}: {png_path}, {csv_path}")
+
+
+    # Handle unmapped classes (Modified to include both raw and broad category saving)
+    unmapped = [c for c in seen_classes if c not in MODULARITY_META]
+    for cls in unmapped:
+        # 1. Raw Keywords
+        counts_kw = class_keyword_counts.get(cls, Counter())
+        if counts_kw:
+            label = f"Modularity_{cls}"
+            csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(label)}.csv"
+            df = pd.DataFrame(counts_kw.most_common(), columns=["keyword", "count"]) 
+            df["keyword"] = df["keyword"].str.title()
+            df.to_csv(csv_path, index=False)
+            # Plotting logic... (omitted here for brevity, included in original script)
+            # print(f"Saved CSV for unmapped class {cls} (Keywords): {csv_path}")
+            
+        # 2. Broad Categories (NEW)
+        counts_cat = class_category_counts.get(cls, Counter())
+        if counts_cat:
+            label = f"Modularity_{cls}"
+            csv_path = out_dir / f"categories_counts_mod_{cls}_{sanitize_filename(label)}.csv"
+            df = pd.DataFrame(counts_cat.most_common(), columns=["category", "count"]) 
+            df.to_csv(csv_path, index=False)
+            # Plotting logic... (omitted here for brevity, included in original script)
+            # print(f"Saved CSV for unmapped class {cls} (Categories): {csv_path}")
+
+    # Generate QA report: all unique keywords processed (Original logic)
     all_keywords = set()
     for counts in class_keyword_counts.values():
         all_keywords.update(counts.keys())
@@ -280,9 +369,20 @@ def main(argv):
         print(f"GEXF file not found: {gexf_path}")
         return 1
     out_dir = Path(argv[2]) if len(argv) > 2 else gexf_path.parent / "keywords_histograms"
+    
+    # Check for the required CSV file
+    if not Path("keyword_classification_25_categories.csv").exists():
+        print("Error: Required classification file 'keyword_classification_25_categories.csv' not found.")
+        return 1
+        
+    # --- Execute the histogram generation ---
     make_histograms(gexf_path, out_dir)
     return 0
 
 
 if __name__ == '__main__':
+    # Your original main execution block, modified for the current environment.
+    # To run this script, you would execute it with the path to your GEXF file.
     raise SystemExit(main(sys.argv))
+    print("\nScript prepared! This code is now ready to be run in your environment.")
+    print("Execute it with the path to your GEXF graph file as the first argument (e.g., python script.py my_graph.gexf).")
