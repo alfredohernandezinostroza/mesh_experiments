@@ -30,3 +30,9 @@ all_keywords_count_old.png
 all_keywords_count.csv
 all_keywords_count.png
 keyword_classification_25_categories.csv
+keywords_histograms_no_s_plurals/
+keywords_histograms_normalized/
+errors_in_classifying_keywo_unnormalized.txt
+errors_in_classifying_keywords.txt
+errors_in_classifying_keywords_normalized.txt
+.vscode/launch.json
