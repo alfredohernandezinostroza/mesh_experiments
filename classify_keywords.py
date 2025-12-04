@@ -5,6 +5,7 @@ import re
 # A keyword is classified into ALL categories for which it contains a matching term.
 CATEGORIES = {
     'A. Neuroscience & Neuroanatomy': [
+        # Existing
         'brain', 'cortex', 'gyrus', 'lobe', 'striatum', 'thalamus', 'hippocampus', 'amygdala', 
         'basal ganglia', 'cerebellum', 'nucleus', 'substantia nigra', 'putamen', 'caudate', 
         'pallidus', 'ventricular', 'neocortex', 'corpus callosum', 'white matter', 'gray matter', 
@@ -16,9 +17,25 @@ CATEGORIES = {
         'cingulate', 'entorhinal', 'subthalamic', 'prefrontal', 'motor cortex', 'sensory cortex', 
         'parietal', 'temporal', 'frontal', 'occipital', 'insula', 'operculum', 'nerve', 'ganglion',
         'corticospinal', 'pyramidal tract', 'extrapyramidal', 'neuroma', 'radiculopathy', 'plexus',
-        'subventricular', 'perineuronal', 'connectome', 'connectomics', 'cytoarchitecture'
+        'subventricular', 'perineuronal', 'connectome', 'connectomics', 'cytoarchitecture',
+        # New Additions
+        '(bg) basal ganglia', '(h less/more-affected ) less/more affected hemisphere', '(lh) left hemisphere', 
+        '(m1) motor cortex', '(rh) right hemisphere', '1st through 4th cerebellar lobules ( 1–4cb )', 
+        '3d brain cortex', 'abductor digiti minimi muscle ( adm )', 'abductor pollicis brevis muscle ( apb )', 
+        'abductor pollicis longus muscle', 'achilles tendon', 'acoustic nerve', 'acoustic neuroma', 
+        'agranular insular area ( iag )', 'amygdaloid body', 'anterior auditory field ( aaf )', 
+        'anterior cingulate cortex ( acc )', 'anterior cingulated zone', 'anterior cruciate ligament', 
+        'anterior deltoid ( ad )', 'anterior division of the rostral cingulate zone ( rcza )', 
+        'anterior dorsal field ( adf )', 'anterior dorsal nucleus of the medial geniculate complex ( mgad )', 
+        'anterior ectosylvian auditory area ( faes )', 'anterior ectosylvian somatosensory area ( siv )', 
+        'anterior ectosylvian sulcus ( aes )', 'anterior ectosylvian visual area ( aev )', 
+        'anterior forebrain pathway', 'anterior forebrain pathway ( afp )', 'anterior intraparietal area ( aip )', 
+        'anterior striatum', 'anterior ventral field ( avf )', 'arcuate fasciculus', 'area v5/mt', 
+        'articulatory motor cortex', 'association cortex', 'atlanto-axial joint', 'auditory cortex', 
+        'auditory cortex ( ac )', 'auditory cortex ( au )'
     ],
     'B. Neuropharmacology & Biochemistry': [
+        # Existing
         'dopamine', 'serotonin', 'glutamate', 'gaba', 'acetylcholine', 'nicotinic', 'muscarinic', 
         'nmda', 'ampa', 'neurotransmitter', 'receptor', 'chemical', 'molecule', 'drug', 'agonist', 
         'antagonist', 'kinase', 'phosphatase', 'enzyme', 'cannabinoid', 'bdnf', 'l-dopa', 'protein', 
@@ -30,23 +47,65 @@ CATEGORIES = {
         'insulin', 'ghrelin', 'leptin', 'noradrenaline', 'norepinephrine', 'epinephrine', 'adrenaline', 
         'histamine', 'adenosine', 'atp', 'adp', 'camp', 'cgmp', 'second messenger', 'g-protein',
         'opioid', 'endocannabinoid', 'ligand', 'metabotropic', 'ionotropic', 'pharmaco', 'biomarker',
-        'oxidative stress', 'antioxidant', 'nootropic', 'botulinum', 'toxin'
+        'oxidative stress', 'antioxidant', 'nootropic', 'botulinum', 'toxin',
+        # New Additions
+        '( r )-(+)-[2,3-dihydro-5-methyl-3-(4-morpholinylmethyl)pyrrolo[1,2,3-de]-1,4-benzoxazin-6-yl]-1-naphthalenylmethanone mesylate', 
+        '(1s,3r)-1-aminocyclopentane-1', '(s)-3', '(±)-trans-1-aminocyclopentane-1', '(±)-trans-acpd', 
+        '1-ebio', '1-methyl-4-phenyl-1', '11c-raclopride', '2-(5-chloro)tricyclo [3.3.1.13, 2-dioxetane-3, 7]decan}-4-Yl)phenyl phosphate ( cspd )', 
+        '2-arachidonyl glycerol', '2-methyl-6-phenylethynyl-pyridinempep', '3-acetylpyridine ( 3-ap )', 
+        '3-dicarboxylic acid', '3-dicarboxylic acid1s', '3-dicarboxylic acidt-acpd', '3-dicarboxylic acid±-trans-acpd', 
+        '3-dione', '3-dione disodium salt ( dnqx )', '3-dionecnqx', '3-nitropropionic acid', 
+        '3-nitropropionic acid ( 3-np )', '3r)-1-aminocyclopentane-1', '3r-acpd', '4-dihydroxyphenylacetic acid', 
+        '4-dihydroxyphenylalanine ( l-dopa )', '5-dhpg', '5-dihydroxyphenilglycine', '5-dihydroxyphenylglycine', 
+        '5-ht serotonin', '6-cyano-7-nitroquinoxaline-2', '6-hydroxydopamine', '6-hydroxydopamine ( 6-ohda )', 
+        '6-tetrahydropyridin ( mptp )', '6-tetrahydropyridine ( mptp )', '7-nitro indazole monosodium salt', 
+        '[11c]-raclopride ( rac )', '[11c]raclopride', '[18f]-fluorodeoxyglucose ( fdg )', 
+        'a subunit of the gamma-aminobutyric acid receptor ( gabaa )', 'acetylcholine ( ach )', 
+        'acetyltransferases', 'ach', 'ach acetylcholine', 'actin', 'activation energy', 'activity-dependent transcription factor', 
+        'adeno-associated virus ( aav )', 'adenosine a2a receptor', 'adenosine signaling', 'adenosines', 
+        'adenylate cyclase', 'adrenergic receptors', 'all-trans retinoic acid', 'alleles', 'alpha-synuclein', 
+        'am251', 'amantadine', 'amines', 'amino acid ( aa )', 'amino acid neurotransmitters', 'amino acid sequence', 
+        'amino acids', 'aminobutyric acid', 'ampa receptor', 'ampa receptors', 'ampar', 'amphetamine', 
+        'amphetamines', 'amylases', 'anandamide', 'ano2', 'anoctamin-2', 'antagonist coactivation', 
+        'anti-glur delta antibody', 'anti-mglur antibody', 'anti-nogoa', 'anti-vgcc antibody', 
+        'antibacterial agents', 'antibiotics', 'antibodies ( abs )', 'antibody-toxin conjugates', 
+        'antidepressants', 'antigens', 'antineoplastic agents', 'antiparkinsonian agents', 'antipsychotic agents', 
+        'ap-5', 'apomorphine', 'apoptosis inducing factor', 'app amyloid precursor protein', 'arachidonic acid', 
+        'aspartic acid', 'atp adenosine triphosphate'
     ],
     'C. Neurophysiology & Brain Activity': [
+        # Existing
         'eeg', 'meg', 'bold', 'oscillation', 'rhythm', 'alpha', 'beta', 'gamma', 'theta', 'delta', 
         'mu rhythm', 'tau rhythm', 'wave', 'coherence', 'synchronization', 'desynchronization', 
         'entrainment', 'phase', 'coupling', 'cross-frequency', 'evoked potential', 'mep', 'erp', 
         'lfp', 'potential', 'firing', 'burst', 'power', 'resting-state', 'connectivity', 'granger', 
         'spindle', 'ripple', 'sharp-wave', 'slow-wave', 'event-related', 'spectral', 'time-frequency', 
-        'electrophysiology', 'activity', 'activation', 'arousal', 'sleep stage', 'rem sleep'
+        'electrophysiology', 'activity', 'activation', 'arousal', 'sleep stage', 'rem sleep',
+        # New Additions
+        '%sc percentage signal change', '(amt) active motor threshold', '(i/o curve) input–output curve', 
+        '(mep) motor evoked potential', '(mvc) maximal voluntary contraction', '(rmt) rest motor threshold', 
+        '(sp) silent period', '1/f noise', '40-hz multi-target stimulation', 'absolute change in gain ( acg )', 
+        'action potentials', 'activation', 'active motor threshold ( amt )', 'activity', 'activity-dependence', 
+        'after-sensations', 'afterhyperpolarization', 'ahp afterhyperpolarization', 'alpha and beta rhythms', 
+        'alpha band', 'alpha desynchronization', 'alpha event-related desynchronization', 'alpha frequency band', 
+        'alpha oscillations', 'alpha power', 'alpha rhythm', 'alpha-band', 'alpha–gamma linkage', 
+        'amplitude of low-frequency fluctuation', 'anticipatory neuronal activity', 'ap action potential', 
+        'ap-epsp coupling', 'arousal (physiology)', 'auditory erp attenuation', 'auditory evoked response'
     ],
     'D. Brain Stimulation & Intervention': [
+        # Existing
         'tms', 'tdcs', 'stimulation', 'microstimulation', 'optogenetic', 'chemogenetic', 
         'electrical stimulation', 'epidural', 'neurostimulation', 'deep brain stimulation', 'dbs', 
         'nibs', 'ct bs', 'tbs', 'tacs', 'trns', 'tfus', 'ultrasound stimulation', 'magnetic stimulation', 
-        'anodal', 'cathodal', 'sham', 'theta burst', 'paired-pulse', 'neuromodulation'
+        'anodal', 'cathodal', 'sham', 'theta burst', 'paired-pulse', 'neuromodulation',
+        # New Additions
+        '(tms) transcranial magnetic stimulation', '1-ebio', '40-hz multi-target stimulation', 
+        '5-hz rtms', 'a-tdcs anodal transcranial direct current stimulation', 'acoustic stimulation', 
+        'acupuncture anesthesia', 'afferent stimulation', 'anodal', 'anodal tdcs', 
+        'anodal transcranial direct current stimulation'
     ],
     'E. Motor Skills & Performance': [
+        # Existing
         'skill', 'performance', 'expertise', 'athlete', 'sport', 'tennis', 'golf', 'baseball', 
         'basketball', 'soccer', 'swimming', 'dance', 'drawing', 'typing', 'handwriting', 'juggling', 
         'kicking', 'throwing', 'aiming', 'reach', 'grasp', 'dexterity', 'musician', 'pianist', 
@@ -55,9 +114,17 @@ CATEGORIES = {
         'skiing', 'skating', 'driving', 'piloting', 'gaming', 'esports', 'video game', 'playing', 
         'music', 'instrument', 'violin', 'guitar', 'drumming', 'singing', 'fine motor', 'gross motor', 
         'manual', 'bimanual', 'unimanual', 'prehension', 'locomotion', 'gait', 'balance', 'posture', 
-        'climbing', 'darts', 'archery', 'shooting', 'ball', 'racket', 'club', 'bat'
+        'climbing', 'darts', 'archery', 'shooting', 'ball', 'racket', 'club', 'bat',
+        # New Additions
+        '*suture techniques', '1rm', 'acrobatic training', 'acting', 'action games', 'action video games', 
+        'action video gaming', 'active play', 'activities of daily living', 'activities of daily living (adl)', 
+        'activities of daily living (adls)', 'aikido', 'aiming', 'amateur athletes', 'aquatic sports', 
+        'archery', 'arremesso de dardo', 'association football', 'athlete', 'athlete development', 
+        'athlete motor training', 'athlete training', 'athletes', 'athletic ability', 'athletic performance', 
+        'athletics'
     ],
     'F. Motor Control & Execution': [
+        # Existing
         'motor control', 'control', 'kinematics', 'kinetics', 'force', 'torque', 'velocity', 
         'acceleration', 'dynamics', 'trajectory', 'movement', 'posture', 'synergy', 'redundancy', 
         'degrees of freedom', 'df', 'dof', 'inverse model', 'forward model', 'feedback', 'feedforward', 
@@ -66,139 +133,352 @@ CATEGORIES = {
         'planning', 'preparation', 'initiation', 'termination', 'sequencing', 'timing', 'rhythm', 
         'synchronization', 'manipulation', 'effector', 'limb', 'joint', 'muscle', 'motor unit', 
         'emg', 'electromyography', 'stiffness', 'impedance', 'compliance', 'viscosity', 'inertia', 
-        'center of mass', 'center of pressure', 'ground reaction', 'biomechanics'
+        'center of mass', 'center of pressure', 'ground reaction', 'biomechanics',
+        # New Additions
+        '(mvc) maximal voluntary contraction', '2330 motor processes', '3d reaching movements', 
+        'abduction', 'abduction (kinesiology)', 'acceleration (mechanics)', 'acoustical kinematics', 
+        'action control', 'action generation', 'action perception coupling', 'action planning', 
+        'action preparation', 'action program', 'action selection', 'action sequences', 'adaptive motor control', 
+        'adaptive movement variability', 'adjustability of grasping force', 'adjustment', 'afferent feedback', 
+        'aiming movements', 'ajustements posturaux anticipés', 'akinesia', 'amplitude and position coding', 
+        'animal locomotion', 'animal mechanics', 'ankle dorsiflexion', 'ankle dorsiflexion (adf)', 
+        'ankle physiology', 'ankle--hip relative phase', 'ankle-hip coordination', 'antagonist coactivation', 
+        'anterior–posterior ground reaction force (ap-grf)', 'anticipatory planning', 'anticipatory postural adjustment', 
+        'anticipatory postural adjustments', 'arm dynamics', 'arm kinematics', 'arm motor performance', 
+        'arm movement', 'arm movements', 'arm muscles', 'arm physiology', 'arm reaching', 'arm reaching movement', 
+        'arm weight compensation', 'arm-reaching', 'articulating', 'articulation', 'asymmetric', 
+        'audio-motor integration', 'audiomotor resonance'
     ],
     'G. Motor Learning: General/Theory': [
+        # Existing
         'motor learning', 'learning', 'skill acquisition', 'acquisition', 'retention', 'transfer', 
         'generalization', 'theory', 'schema', 'consolidation', 'memory', 'savings', 're-learning', 
         'automatization', 'practice', 'training', 'procedural learning', 'adaptation', 'aftereffect', 
         'interference', 'facilitation', 'inhibition', 'plasticity', 'use-dependent', 'experience-dependent', 
         'offline', 'online', 'fast learning', 'slow learning', 'stage', 'phase', 'curve', 'asymptote', 
-        'plateau'
+        'plateau',
+        # New Additions
+        '(incidental) motor learning', '(ml) motor learning', '(mp) motor practice', 'acquirable skill', 
+        'acquisition and retention', 'acquisition learning', 'acquisition of motor learning', 
+        'acquisition of skilled behavior', 'acquisition phase', 'action-effect-related motor adaptation', 
+        'adaptation', 'adaptation model', 'adaptation models', 'adaptational effects', 'adaptive generalization', 
+        'adaptive learning', 'after-effect', 'after-effects', 'aftereffect', 'aftereffects', 'analogy learning', 
+        'anticipatory recall', 'apprentissage', 'apprentissage des aptitudes motrices', 'aprendizagem', 
+        'aprendizagem em labirinto', 'aprendizagem motora', 'arbitrary associative visual motor learning', 
+        'arbitrary mapping', 'artificial grammar learning', 'association learning', 'associative learning', 
+        'associative motor learning'
     ],
     'H. Motor Learning: Mechanisms & Factors': [
+        # Existing
         'practice', 'feedback', 'instruction', 'knowledge of results', 'kr', 'knowledge of performance', 
         'kp', 'schedule', 'variability', 'interference', 'contextual', 'dosage', 'error', 'amplification', 
         'difficulty', 'guidance', 'repetition', 'spacing', 'massed', 'yoked', 'augmented', 'terminal', 
         'concurrent', 'bandwidth', 'fading', 'summary', 'average', 'self-controlled', 'dyad', 'observational', 
-        'demonstration', 'modeling', 'mental practice', 'imagery', 'part-practice', 'whole-practice'
+        'demonstration', 'modeling', 'mental practice', 'imagery', 'part-practice', 'whole-practice',
+        # New Additions
+        '3d feedback', 'acoustic feedback', 'action imitation', 'action observation', 'action observation therapy', 
+        'action-effect association', 'action-effect contingency', 'action-observation', 'active exploration', 
+        'active exposure', 'active learning', 'active training', 'adaptive schedules', 'adaptive training', 
+        'advance-cue usage', 'afferent feedback', 'algorithm-based practice schedule', 'allocentric observation', 
+        'altered auditory feedback', 'amount of practice', 'analogy', 'anchoring', 'anchoring strategy', 
+        'anchors', 'artificial feedback', 'assisted training', 'association of ideas', 'associative input', 
+        'at-home training', 'attention focusing in execution of complex sensorimotor skills', 'attentional anchor', 
+        'attentional focus', 'attentional focusing', 'audio-motor training', 'augmented feedback'
     ],
     'I. Implicit vs. Explicit Learning': [
+        # Existing
         'implicit', 'explicit', 'awareness', 'conscious', 'procedural', 'declarative', 'unconscious', 
         'non-declarative', 'monitoring', 'controlled processing', 'automatic', 'automaticity', 
         'dual-task', 'secondary task', 'cognitive load', 'working memory load', 'verbalization', 
-        'verbal report', 'rule', 'strategy', 'sequence learning', 'serial reaction time', 'srt'
+        'verbal report', 'rule', 'strategy', 'sequence learning', 'serial reaction time', 'srt',
+        # New Additions
+        'action awareness', 'alternating serial reaction time task', 'attention to action', 
+        'awareness', 'associative sequence learning'
     ],
     'J. Sensory & Perceptual Systems': [
+        # Existing
         'sensory', 'somatosensory', 'proprioception', 'proprioceptive', 'tactile', 'haptic', 
         'auditory', 'vestibular', 'perception', 'integration', 'recalibration', 'cross-modal', 
         'multisensory', 'senses', 'afferent', 'efferent', 'vision', 'visual', 'ocular', 'eye', 
         'ear', 'skin', 'touch', 'sound', 'noise', 'vibration', 'temperature', 'nociception', 'pain', 
         'gustatory', 'olfactory', 'psychophysics', 'threshold', 'discrimination', 'detection', 
-        'illusion', 'hallucination'
+        'illusion', 'hallucination',
+        # New Additions
+        '3d shape perception', 'a audio/auditory', 'absolute pitch', 'acoustic localization', 
+        'acoustic signals', 'action perception', 'action sounds', 'active sensing', 'afferent pathways', 
+        'after-sensations', 'altered auditory feedback', 'ambulatory electrocardiography', 'amplitude modulation', 
+        'animal sounds', 'anterior auditory field ( aaf )', 'anterior ectosylvian auditory area ( faes )', 
+        'anterior ectosylvian somatosensory area ( siv )', 'anterior ectosylvian visual area ( aev )', 
+        'artificial touch', 'audio', 'audio-somatosensory', 'audio-tactile', 'audio-visual', 
+        'audio-visual interaction', 'audiotactile integration', 'audiovisual', 'audiovisual congruency', 
+        'audiovisual integration', 'audio–visual', 'audio–visual interaction', 'audition', 'auditory', 
+        'auditory ( a )', 'auditory adaptation', 'auditory context', 'auditory cue', 'auditory cueing', 
+        'auditory cuing', 'auditory dominance'
     ],
     'K. Plasticity & Adaptation': [
+        # Existing
         'plasticity', 'adaptation', 'ltp', 'ltd', 'potentiation', 'depression', 'metaplasticity', 
         'reorganization', 're-organization', 'remapping', 'use-dependent', 'homeostatic', 'hebbian', 
         'synaptic plasticity', 'structural plasticity', 'functional plasticity', 'recovery', 'repair', 
-        'regeneration', 'sprouting', 'pruning'
+        'regeneration', 'sprouting', 'pruning',
+        # New Additions
+        '3-nitropropionic acid-induced long-term potentiation', '3-nitropropionic acid-induced long-term potentiation3-np-ltp', 
+        '3-np-ltp', 'aberrant plasticity', 'abnormal reorganization', 'acquisition learning', 
+        'activity-dependent plasticity', 'activity‐dependent plasticity', 'adaptation', 'adaptation model', 
+        'adaptive plasticity', 'aftereffect', 'associative and non-associative plastic processes', 
+        'associative plasticity'
     ],
     'L. Cognition & Executive Function': [
+        # Existing
         'cognition', 'cognitive', 'attention', 'executive function', 'working memory', 'wm', 
         'processing', 'load', 'task switch', 'mental', 'decision making', 'planning', 'control', 
         'mind', 'reasoning', 'computational psychiatry', 'memory', 'inhibition', 'suppression', 
         'updating', 'shifting', 'flexibility', 'intelligence', 'iq', 'aptitude', 'focus', 
         'concentration', 'vigilance', 'awareness', 'consciousness', 'problem solving', 'creativity', 
-        'language', 'speech', 'semantic', 'episodic'
+        'language', 'speech', 'semantic', 'episodic',
+        # New Additions
+        '2340 cognitive processes', '2343 learning & memory', 'abilities', 'ability', 'ability research', 
+        'ability testing', 'ability-related differences', 'abstract structure', 'abstract thought', 
+        'academic ability', 'academic achievement', 'academic motivation', 'academic tasks', 'acalculia', 
+        'achievement', 'action concepts', 'action memory', 'action prediction', 'action processing', 
+        'action representation', 'action representations', 'action understanding', 'action-cognition coupling', 
+        'action–cognition coupling', 'activity control task (act)', 'adaptive engagement', 'adaptive shift', 
+        'age factors in cognition', 'age factors in memory', 'age-dependence', 'alerting', 'allocation of attention', 
+        'ambiguity tolerance', 'analogical reasoning', 'animal cognition', 'animal intelligence', 
+        'anticipatory recall', 'apperception', 'aptitudes', 'arithmetic', 'arithmetic problem-solving', 
+        'association', 'association of ideas', 'associative memory', 'associative memory (psychology)', 
+        'associative processes', 'attention', 'attention (behavior)', 'attention and executive control', 
+        'attention control', 'attention demand', 'attention demands', 'attention distraction', 'attention in children', 
+        'attention research', 'attention resources', 'attention span', 'attention testing', 'attentional bias', 
+        'attentional blink', 'attentional capture', 'attentional control', 'attribute–treatment interaction'
     ],
     'M. Computational & Modeling': [
+        # Existing
         'model', 'computational', 'algorithm', 'simulation', 'neural network', 'deep learning', 
         'machine learning', 'predictive', 'bayesian', 'dynamical system', 'theory', 'optimization', 
         'prediction', 'manifold', 'complexity', 'artificial intelligence', 'robot control', 
         'classifier', 'decoder', 'encoding', 'decoding', 'dimensionality reduction', 'pca', 'ica', 
         'lda', 'svm', 'regression', 'correlation', 'cluster', 'dynamics', 'attractor', 'bifurcation', 
         'chaos', 'noise', 'stochastic', 'deterministic', 'linear', 'nonlinear', 'parameter', 
-        'estimation', 'kalman', 'markov', 'monte carlo'
+        'estimation', 'kalman', 'markov', 'monte carlo',
+        # New Additions
+        '(i/o curve) input–output curve', '1/f noise', '3d model', '3d reconstruction', 'act-r', 
+        'action models', 'active inference', 'actor-critic', 'actor–critic Network', 'act‐r', 
+        'adaptation model', 'adaptation models', 'adaptive control', 'adaptive control systems', 
+        'adaptive dynamic programming', 'adaptive internal model', 'adaptive logics', 'adaptive neural control', 
+        'adaptive system', 'adaptive systems', 'adaptive threshold-hunting', 'algorithm-based practice schedule', 
+        'algorithms', 'analysis of covariance', 'analyses of variance ( anova )', 'analysis of variance', 
+        'analysis of variance ( anova )', 'analysis of variance (anova)', 'apriori algorithm', 
+        'arbitrary constants', 'artificial intelligence', 'artificial neural connection', 'artificial neural network', 
+        'artificial neural networks', 'artificial spiking neural network', 'association model', 
+        'asymptotes', 'attractor dynamics', 'attractors (mathematics)'
     ],
     'N. Robotics & Technology': [
+        # Existing
         'robot', 'virtual reality', 'vr', 'exoskeleton', 'assistive', 'bmi', 'bci', 'wearable', 
         'haptic device', 'kinect', 'mri-compatible', 'technology', 'system design', 'interface', 
         'simulator', 'laparoscopy', 'teleoperation', 'telepresence', 'prosthesis', 'prosthetic', 
         'orthosis', 'orthotic', 'device', 'sensor', 'actuator', 'manipulator', 'controller', 
         'software', 'hardware', 'system', 'machine', 'computer', 'digital', 'engineering', 
         'mechatronics', 'app', 'smartphone', 'tablet', 'camera', 'tracker', 'motion capture', 
-        'imu', 'accelerometer', 'gyroscope', 'magnetometer'
+        'imu', 'accelerometer', 'gyroscope', 'magnetometer',
+        # New Additions
+        '(hmd) head mounted display', '(vr) virtual reality', '2d laparoscopy', '3d laparoscopy', 
+        '3d robotic manipulandum', '3d visualization', 'aac system design', 'accelerator', 'accelerometer', 
+        'accelerometers', 'accelerometry', 'acoustic devices', 'acquisition of electronic information resources', 
+        'active video game', 'active video games', 'active video gaming', 'activity recognition', 
+        'actuators', 'aerospace electronics', 'air cylinders', 'air traffic control', 'animation (cinematography)', 
+        'animations', 'ankle-foot-orthosis', 'app automated pellet presentation', 'application software', 
+        'artificial arms', 'artificial hands', 'artificial implants', 'artificial limbs', 'artificial muscles', 
+        'artificial objects', 'assistance system', 'assistive devices', 'assistive robotics', 'assistive technologies', 
+        'assistive technology', 'audio signal processing', 'audiovisual aids in education', 'audiovisual equipment', 
+        'audiovisual materials'
     ],
     'O. Clinical Conditions & Disease Models': [
+        # Existing
         'parkinson', 'dystonia', 'ataxia', 'stroke', 'cerebral palsy', 'autism', 'schizophrenia', 
         'alzheimer', 'dementia', 'adhd', 'epilepsy', 'huntington', 'disease', 'disorder', 'syndrome', 
         'injury', 'lesion', 'hemiparesis', 'tremor', 'multiple sclerosis', 'ms', 'dcd', 'pain', 
         'neuropathy', 'radiculopathy', 'myopathy', 'amyotrophic lateral sclerosis', 'als', 'tumor', 
         'cancer', 'oncology', 'trauma', 'tbi', 'concussion', 'psychiatric', 'depression', 'anxiety', 
         'addiction', 'obesity', 'diabetes', 'cardiovascular', 'aging', 'frailty', 'impairment', 
-        'disability', 'handicap', 'pathology', 'diagnosis', 'prognosis', 'etiology', 'epidemiology'
+        'disability', 'handicap', 'pathology', 'diagnosis', 'prognosis', 'etiology', 'epidemiology',
+        # New Additions
+        '(pd) parkinson\'s disease', '(pdp) patients with parkinson\'s disease', '(updrs) unified parkinson disease rating scale', 
+        '22q11 deletion syndrome', '3-acetylpyridine ( 3-ap )', '3-acetylpyridine (3-ap)', 
+        '3-nitropropionic acid', '3xtg-ad', '5xfad', '5xfad mouse model', '6-hydroxydopamine ( 6-ohda )', 
+        '6-ohda-induced lesion', '6-tetrahydropyridin ( mptp )', '6-tetrahydropyridine ( mptp )', 
+        'abnormal reflexes', 'acalculia', 'accident prevention', 'accidental falls', 'accidental falls in old age', 
+        'acoustic neuroma', 'acquired brain injury', 'acidente vascular cerebral', 'acl injury', 
+        'acute cerebellar stroke', 'acute cerebellitis', 'acute diseases', 'acute inflammation', 
+        'acute pain', 'acute stroke', 'addiction', 'adhd', 'adverse health care events', 'affective disorders', 
+        'age factors in cognition disorders', 'age factors in disease', 'agraphia', 'akinesia', 
+        'albinism', 'alcohol drug abuse', 'alcohol-related neurodevelopmental disorders (arnd)', 
+        'alpha-synucleinopathy', 'alzheimer', 'alzheimer\'s disease', 'alzheimer\'s patients', 
+        'alzheimer’s disease', 'amaurosis fugax', 'amnestic mild cognitive impairment', 'amputation', 
+        'amputation complications', 'amputees', 'amyotrophic lateral sclerosis', 'anaerobic infections', 
+        'anaesthetic neurotoxicity', 'ankle abnormalities', 'ankle injuries', 'ankle injury', 
+        'anterior cruciate ligament (acl) injury', 'anterior cruciate ligament injuries', 'anterior knee pain', 
+        'anxiety', 'anxiety disorders', 'anxiety in old age', 'apathy', 'aphasia', 'aphasic persons', 
+        'apraxia', 'apraxia of speech', 'apraxic agraphia', 'arm abnormalities', 'arm amputation', 
+        'arm paralysis', 'arnold-chiari deformity', 'arthroplasty', 'articulation disorders', 
+        'articulation disorders in children', 'asd', 'asperger syndrome', 'asperger\'s syndrome', 
+        'asperger\'s syndrome in children', 'asperger’s disorder', 'asperger’s disorder (ad)', 
+        'aspiration pneumonia', 'asthenia', 'ataxia', 'ataxin1', 'attention deficit hyperactivity disorder', 
+        'attention deficit hyperactivity disorder (adhd)', 'attention deficit-hyperactivity disorder', 
+        'attention deficit/hyperactivity disorder ( adhd )', 'attention-deficit disorder in adults', 
+        'attention-deficit hyperactivity disorder', 'attention-deficit/hyperactivity disorder', 
+        'attention-deficit/hyperactivity disorder (adhd)', 'attention‐deficit/hyperactivity disorder'
     ],
     'P. Rehabilitation & Therapy': [
+        # Existing
         'rehabilitation', 'therapy', 'treatment', 'intervention', 'clinical', 'physical therapy', 
         'occupational therapy', 'cimt', 'music-supported', 'gait training', 'assistive', 
         'functional recovery', 'neurorehabilitation', 'prehab', 'neurodevelopmental treatment', 
         'physiotherapy', 'training', 'exercise', 'practice', 'regimen', 'protocol', 'telehealth', 
-        'telerehab', 'remote', 'home-based', 'community-based', 'inpatient', 'outpatient'
+        'telerehab', 'remote', 'home-based', 'community-based', 'inpatient', 'outpatient',
+        # New Additions
+        '(updrs) unified parkinson disease rating scale', 'abdominal surgery', 'accident prevention', 
+        'accidental fall prevention', 'acl injury prevention', 'action observation therapy', 
+        'action observation treatment', 'activities of daily living training', 'acupuncture anesthesia', 
+        'acute exercise', 'advanced life support', 'aerobic', 'aerobic exercise', 'aerobic exercises', 
+        'allied health education', 'alternative medicine', 'alternative pedagogy', 'anesthesia', 
+        'anesthesiology', 'anesthetics', 'ankle injury', 'ankle weight', 'anterior cruciate ligament injury prevention', 
+        'anterior cruciate ligament reconstruction', 'anterior cruciate ligament surgery', 'antineoplastic agents', 
+        'apraxia treatment', 'aquatic exercises', 'arm exercises', 'arm surgery', 'art therapy', 
+        'arthroplasty', 'arthroscopy', 'artificial limbs', 'assertiveness training', 'assist-as-needed', 
+        'assistance', 'assisted training', 'assistive devices', 'assistive technology', 'at-home training'
     ],
     'Q. Psychological Factors & Motivation': [
+        # Existing
         'motivation', 'emotion', 'anxiety', 'self-efficacy', 'self-control', 'goal', 'stress', 
         'mindfulness', 'imagery', 'mental practice', 'mental-training', 'attitude', 'expectancy', 
         'psychology', 'social', 'confidence', 'affect', 'mood', 'personality', 'trait', 'state', 
         'resilience', 'coping', 'burnout', 'fatigue', 'arousal', 'reward', 'punishment', 'incentive', 
-        'feedback', 'reinforcement'
+        'feedback', 'reinforcement',
+        # New Additions
+        'academic motivation', 'acceptability', 'achievement goal theory', 'act psychology', 
+        'active imagination', 'active self', 'adaptability (personality)', 'adaptability (personality) in children', 
+        'adaptability to others', 'adaptation level (psychology)', 'addiction', 'adlerian psychology', 
+        'adolescent psychology', 'aesthetics', 'affect', 'affect (psychology)', 'affect suppression', 
+        'affective disorders', 'affective learning', 'affective neuroscience', 'agency', 'agitation (psychology)', 
+        'ambiguity tolerance', 'animals', 'anxiety', 'anxiety prevention', 'anxiety-like behavior', 
+        'apathy', 'applied cognitive psychology', 'applied psychology', 'approach behavior', 'approach/withdrawal motivation', 
+        'approaching', 'archetype (psychology)', 'arcs model of motivational design', 'arousal', 
+        'arousal state', 'art therapy', 'assertiveness training', 'association of ideas', 'athletic ability & psychology', 
+        'attention (behavior)', 'attitude (psychology)', 'attitudes of medical personnel', 'attitudes toward aging', 
+        'attraction', 'attribution (social psychology)'
     ],
     'R. Timing & Rhythm': [
+        # Existing
         'timing', 'rhythm', 'temporal', 'synchronization', 'metronome', 'interval', 'period', 
         'tempo', 'beat', 'duration', 'speed', 'rate', 'frequency', 'latency', 'reaction time', 
-        'response time', 'movement time', 'onset', 'offset', 'asynchrony', 'jitter', 'delay'
+        'response time', 'movement time', 'onset', 'offset', 'asynchrony', 'jitter', 'delay',
+        # New Additions
+        'absolute timing', 'acceleration duration ( ad )', 'acoustic startle', 'acoustic startle reflex ( asr )', 
+        'acoustic startle response', 'alternating serial reaction time task', 'anticipatory timing', 
+        'arm frequency', 'asynchrony', 'auditory cue', 'auditory cueing', 'auditory cuing'
     ],
     'S. Research Methodology & Statistics': [
+        # Existing
         'study', 'method', 'trial', 'experiment', 'analysis', 'anova', 'regression', 'statistic', 
         'measurement', 'assessment', 'test', 'scale', 'questionnaire', 'survey', 'reliability', 
         'validity', 'electrophysiology', 'quantitative', 'qualitative', 'bias', 'longitudinal', 
         'cross-sectional', 'head', 'cohort', 'sample', 'population', 'data', 'variable', 'correlation', 
         'causality', 'significance', 'p-value', 'confidence interval', 'effect size', 'power', 
         'meta-analysis', 'review', 'synthesis', 'design', 'protocol', 'procedure', 'task', 
-        'paradigm', 'stimulus', 'response'
+        'paradigm', 'stimulus', 'response',
+        # New Additions
+        '%sc percentage signal change', '(cv) coefficient of variation', '(eg) experimental group', 
+        'accuracy index', 'acquisition of data', 'activity control task (act)', 'adaptive evaluation', 
+        'aha assisting hand assessment', 'akaike information criterion', 'akaike\'s information criterion (aic)', 
+        'ale meta-analysis', 'analyses of variance ( anova )', 'analysis of covariance', 'analysis of variance', 
+        'analysis of variance ( anova )', 'analysis of variance (anova)', 'anovas analysis of variance', 
+        'anthropological research', 'anthropometry', 'appraisers', 'arbitrary constants', 'assessment', 
+        'assessment model', 'auc area under the curve'
     ],
     'T. Human & Animal Subjects': [
+        # Existing
         'human', 'animal', 'subject', 'patient', 'child', 'infant', 'adult', 'elderly', 'older', 
         'adolescent', 'male', 'female', 'mice', 'rat', 'monkey', 'primate', 'songbird', 'athlete', 
         'gamer', 'novice', 'expert', 'td', 'typical', 'population', 'participant', 'volunteer', 
         'student', 'man', 'woman', 'boy', 'girl', 'mouse', 'rodent', 'cat', 'dog', 'fish', 'fly', 
-        'worm', 'yeast', 'cell'
+        'worm', 'yeast', 'cell',
+        # New Additions
+        '(pdp) patients with parkinson\'s disease', '10th postnatal day ( p10 )', '<italic>a. florea</italic>', 
+        '<italic>a. mellifera</italic>', '<italic>b. terrestris</italic>', 'ability in children', 
+        'able-bodied', 'adaptability (personality) in children', 'adolescence', 'adolescent', 
+        'adolescents', 'adult', 'adult students', 'adults', 'african american children', 'age groups', 
+        'aged', 'aging', 'aging.', 'alzheimer\'s patients', 'amateur athletes', 'americans', 
+        'amniotes', 'amputees', 'animal behavior', 'animal cells', 'animal cognition', 'animal courtship', 
+        'animal disease models', 'animal genetics', 'animal intelligence', 'animal model', 'animal models', 
+        'animal models in epilepsy research', 'animal models in research', 'animal models of inflammation', 
+        'animal sexual behavior', 'animal sociality', 'animals', 'aphasic persons', 'archaeological human remains', 
+        'articulation disorders in children', 'asians', 'asperger\'s syndrome in children', 'athlete', 
+        'athletes', 'athletes with disabilities'
     ],
     'U. Vision & Oculomotor Control': [
+        # Existing
         'saccade', 'eye movement', 'gaze', 'ocular', 'oculomotor', 'vor', 'visual tracking', 
         'visual field', 'vision', 'visual', 'pursuit', 'vergence', 'nystagmus', 'pupil', 'retina', 
-        'fovea', 'optic', 'blink', 'fixation', 'microsaccade', 'optokinetic'
+        'fovea', 'optic', 'blink', 'fixation', 'microsaccade', 'optokinetic',
+        # New Additions
+        '2-(5-chloro)tricyclo [3.3.1.13, 2-dioxetane-3, 7]decan}-4-Yl)phenyl phosphate ( cspd )', 
+        '3d shape perception', '6-diamidino-2-phenylindole', 'action perception', 'action perception coupling', 
+        'active sensing', 'all-trans retinoic acid', 'amaurosis fugax', 'anterior ectosylvian visual area ( aev )', 
+        'anticipatory smooth eye movements', 'area v5/mt', 'audio-visual', 'audio-visual interaction', 
+        'audiovisual', 'audiovisual congruency', 'audiovisual integration', 'audio–visual', 'audio–visual interaction'
     ],
     'V. Speech & Language': [
+        # Existing
         'speech', 'language', 'vocal', 'stutter', 'phonetics', 'pronunciation', 'grammar', 
         'tongue', 'articulation', 'singing', 'apraxia of speech', 'dysarthria', 'communication', 
         'voice', 'larynx', 'pharynx', 'oral', 'verbal', 'linguistic', 'phonology', 'syntax', 
-        'semantic', 'pragmatic', 'reading', 'writing', 'sign language'
+        'semantic', 'pragmatic', 'reading', 'writing', 'sign language',
+        # New Additions
+        'aac system design', 'action-related language', 'age factors in language acquisition', 
+        'alphabet', 'american english language', 'analogical reasoning', 'anomia', 'aphasia', 
+        'aphasic persons', 'apraxia', 'apraxia of speech', 'articulating', 'articulation', 
+        'articulation (speech)', 'articulation disorders', 'articulation disorders in children', 
+        'articulatory gestures', 'artificial languages', 'asymmetry (linguistics)', 'audiovisual aids in education', 
+        'audiovisual education', 'audiovisual materials', 'audiovisual presentations'
     ],
     'W. Development & Lifespan': [
+        # Existing
         'development', 'aging', 'infancy', 'childhood', 'adolescence', 'postnatal', 'critical period', 
         'life-span', 'developmental coordination disorder', 'dcd', 'maturation', 'onset', 
         'developmental', 'growth', 'age', 'young', 'old', 'senior', 'pediatric', 'geriatric', 
-        'birth', 'death', 'epigenetic', 'prenatal', 'neonatal'
+        'birth', 'death', 'epigenetic', 'prenatal', 'neonatal',
+        # New Additions
+        '10th postnatal day ( p10 )', 'accidental falls in old age', 'adolescence', 'adolescent', 
+        'adolescent health', 'adolescent psychology', 'adolescents', 'adult', 'adult education', 
+        'adult learning', 'age', 'age & intelligence', 'age differences', 'age discrimination', 
+        'age distribution', 'age factors in cognition', 'age factors in cognition disorders', 'age factors in disease', 
+        'age factors in health behavior', 'age factors in language acquisition', 'age factors in memory', 
+        'age factors in sleep', 'age groups', 'age of acquisition', 'age of onset', 'age-dependence', 
+        'aged', 'ageing', 'aging', 'aging.', 'alcohol-related neurodevelopmental disorders (arnd)', 
+        'anxiety in old age', 'attitudes toward aging'
     ],
     'X. Imaging & Assessment Techniques': [
+        # Existing
         'fmri', 'mri', 'eeg', 'meg', 'pet', 'dti', 'fnirs', 'electromyography', 'emg', 
         'biomechanics', 'posturography', 'kinematics', 'kinetics', 'assessment', 'test', 'scale', 
         'survey', 'imaging', 'spectroscopy', 'microscopy', 'analysis', 'tomography', 'ultrasound', 
         'x-ray', 'ct scan', 'scan', 'recording', 'monitoring', 'measurement', 'evaluation', 
-        'screening', 'diagnostic'
+        'screening', 'diagnostic',
+        # New Additions
+        '%sc percentage signal change', '(ehi) edinburgh handedness inventory', '(updrs) unified parkinson disease rating scale', 
+        '11c-raclopride', '2d:4d', '3d grase', '3d reconstruction', '3d-mri', '3t 3 tesla', 
+        '9-hole box', '[11c]-raclopride ( rac )', '[11c]raclopride', '[18f]-fluorodeoxyglucose ( fdg )', 
+        'abdominal examination', 'ability testing', 'academic achievement evaluation', 'accuracy task', 
+        'actigraphy', 'activity recognition', 'adaptive evaluation', 'aha assisting hand assessment', 
+        'ambulatory electrocardiography', 'amplitude estimation', 'analysis of variance', 'angiogenesis', 
+        'animal experimentation', 'anthropometry', 'arterial spin labeling', 'arterial spin-labeling', 
+        'assessment', 'assessment model', 'athletic ability testing', 'attention networks test', 
+        'attention testing', 'audiometric equipment', 'audiometry'
     ],
     'Z. Unclassified': [
-        # Specific chemicals and niche terms
+        # Existing
         '( R )-(+)-[2,3-dihydro-5-methyl-3-(4-morpholinylmethyl)pyrrolo[1,2,3-de]-1,4-benzoxazin-6-yl]-1-naphthalenylmethanone mesylate',
         '2 S', '2', '212-2 mesylate', '2300', '2320', '2323', '2326', '2330', '2340', '2343', 
         '3-dicarboxylic acid1s', '3-dicarboxylic acidt-acpd', '3-dicarboxylic acid±-trans-acpd', 
@@ -217,15 +497,26 @@ CATEGORIES = {
         'rs-2-chloro-5-hydroxyphenylglycinechpg', 's-α-methylserine-o-phosphatemsop', 
         's-4-carboxy-3-hydroxyphenylglycine4c3hpg', 's-4-carboxyphenylglycine4-cpg', 'snap', 
         'sd', 'snc/r', 'stn', 't-acpd', 'tea', 'tetrodotoxinttx', 'tpa', 'ttx', 'vdcc', 
-        '±-trans-1-aminocyclopentane-1', 'vdp',
-        
-        # Noise/Nonsense terms from error list
-        'lavenders', 'flower petals', 'sunflower seeds', 'chf swiss francs', 'cardinal numbers', 
-        'autographs', 'plastics', 'startup costs', 'wages', 'likes & dislikes', 'non-fungible tokens', 
-        'airplanes', 'helicopters', 'railroads', 'ships', 'submarines', 'trucks', 'vans', 
-        'automobiles', 'bicycles', 'tricycles', 'skateboards', 'roller skates', 'ice skates', 
-        'skis', 'snowboards', 'sleds', 'phronesis', 'monoculars', 'spurious limits', 
-        'likes & dislikes', '2 s', '1s'
+        '±-trans-1-aminocyclopentane-1', 'vdp', 'lavenders', 'flower petals', 'sunflower seeds', 
+        'chf swiss francs', 'cardinal numbers', 'autographs', 'plastics', 'startup costs', 
+        'wages', 'likes & dislikes', 'non-fungible tokens', 'airplanes', 'helicopters', 'railroads', 
+        'ships', 'submarines', 'trucks', 'vans', 'automobiles', 'bicycles', 'tricycles', 
+        'skateboards', 'roller skates', 'ice skates', 'skis', 'snowboards', 'sleds', 'phronesis', 
+        'monoculars', 'spurious limits', 'likes & dislikes', '2 s', '1s',
+        # New Additions
+        '1889-1976', '1929-2017', '1940-1973', '1956-', '1981-', '1s', '2', '2 s', '212-2 mesylate', 
+        '2300', '2320', '2323', '2326', '2330', '2340', '2343', '2′r', '2′s', '3', '3-dicarboxylic acid1s', 
+        '3380', '3700', '3720', '6', '<italic>a. florea</italic>', '<italic>a. mellifera</italic>', 
+        '<italic>b. terrestris</italic>', 'academic medical centers', 'academic medicine', 'academic support programs', 
+        'acceptability', 'access to information', 'acclimatization', 'accreditation', 'acculturation', 
+        'acheulean', 'acheulian culture', 'additives', 'aeronautical flights', 'aeronautics', 
+        'agriculture', 'agrochemicals', 'air cylinders', 'air guns', 'airplane ditching', 'airplanes', 
+        'albus', 'alcohol', 'alcohol drinking', 'american heart association ( aha )', 'american journal of psychology (periodical)', 
+        'americans', 'anatomical planes', 'anatomical variation', 'anatomy', 'anatomy and physiology', 
+        'anatomy education', 'animation (cinematography)', 'animations', 'arizona', 'arms transfers', 
+        'art therapy', 'artificial objects', 'artificial satellite training', 'asians', 'assimilated', 
+        'association for computing machinery', 'astral projection', 'athletic clubs', 'athletic equipment', 
+        'athletic fields', 'athletic trainers', 'audiences', 'audiovisual presentations'
     ]
 }
 # def find_categories_for_keyword(keyword):
