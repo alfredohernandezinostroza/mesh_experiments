@@ -4,54 +4,260 @@ import re
 # The 25 broad classification terms
 # A keyword is classified into ALL categories for which it contains a matching term.
 CATEGORIES = {
-    'A. Neuroscience & Neuroanatomy': ['brain', 'cortex', 'gyrus', 'lobe', 'striatum', 'thalamus', 'hippocampus', 'amygdala', 'basal ganglia', 'cerebellum', 'nucleus', 'substantia nigra', 'putamen', 'caudate', 'pallidus', 'ventricular', 'neocortex', 'corpus callosum', 'white matter', 'gray matter', 'axon', 'dendrite', 'neuron', 'glia', 'meningeal', 'myelin', 'spinal cord', 'brainstem'],
-    'B. Neuropharmacology & Biochemistry': ['dopamine', 'serotonin', 'glutamate', 'gaba', 'acetylcholine', 'nicotinic', 'muscarinic', 'nmda', 'ampa', 'neurotransmitter', 'receptor', 'chemical', 'molecule', 'drug', 'agonist', 'antagonist', 'kinase', 'phosphatase', 'enzyme', 'cannabinoid', 'bdnf', 'l-dopa', 'protein', 'peptide', 'dna', 'rna'],
-    'C. Neurophysiology & Brain Activity': ['eeg', 'meg', 'bold', 'oscillation', 'rhythm', 'alpha', 'beta', 'gamma', 'theta', 'wave', 'coherence', 'synchronization', 'evoked potential', 'mep', 'erp', 'lfp', 'potential', 'firing', 'burst', 'power', 'erp'],
-    'D. Brain Stimulation & Intervention': ['tms', 'tdcs', 'stimulation', 'microstimulation', 'optogenetic', 'chemogenetic', 'electrical stimulation', 'epidural', 'neurostimulation', 'deep brain stimulation', 'dbs', 'nibs', 'ct bs', 'tbs'],
-    'E. Motor Skills & Performance': ['skill', 'performance', 'expertise', 'athlete', 'sport', 'tennis', 'golf', 'baseball', 'basketball', 'soccer', 'swimming', 'dance', 'drawing', 'typing', 'handwriting', 'juggling', 'kicking', 'throwing', 'aiming', 'reach', 'grasp', 'dexterity', 'musician', 'pianist', 'surgeon', 'surgical skill', 'rowing', 'fencing', 'martial arts', 'suturing'],
-    'F. Motor Control & Execution': ['motor control', 'control', 'kinematics', 'kinetics', 'force', 'torque', 'velocity', 'acceleration', 'dynamics', 'trajectory', 'movement', 'posture', 'synergy', 'redundancy', 'degrees of freedom', 'df', 'dof', 'inverse model', 'forward model', 'feedback', 'feedforward', 'primitives', 'jerk', 'coordination', 'gait', 'balance'],
-    'G. Motor Learning: General/Theory': ['motor learning', 'learning', 'skill acquisition', 'acquisition', 'retention', 'transfer', 'generalization', 'theory', 'schema', 'consolidation', 'memory', 'savings', 're-learning', 'automatization', 'practice', 'training', 'procedural learning'],
-    'H. Motor Learning: Mechanisms & Factors': ['practice', 'feedback', 'instruction', 'knowledge of results', 'kr', 'knowledge of performance', 'kp', 'schedule', 'variability', 'interference', 'contextual', 'dosage', 'error', 'amplification', 'difficulty', 'guidance', 'repetition', 'spacing', 'massed', 'yoked'],
-    'I. Implicit vs. Explicit Learning': ['implicit', 'explicit', 'awareness', 'conscious', 'procedural', 'declarative', 'unconscious', 'non-declarative', 'monitoring', 'controlled processing'],
-    'J. Sensory & Perceptual Systems': ['sensory', 'somatosensory', 'proprioception', 'tactile', 'haptic', 'auditory', 'vestibular', 'perception', 'integration', 'recalibration', 'cross-modal', 'multisensory', 'senses', 'afferent', 'efferent', 'vision'],
-    'K. Plasticity & Adaptation': ['plasticity', 'adaptation', 'ltp', 'ltd', 'potentiation', 'depression', 'metaplasticity', 'reorganization', 're-organization', 'remapping', 'use-dependent'],
-    'L. Cognition & Executive Function': ['cognition', 'cognitive', 'attention', 'executive function', 'working memory', 'wm', 'processing', 'load', 'task switch', 'mental', 'decision making', 'planning', 'control', 'mind', 'reasoning', 'computational psychiatry', 'memory'],
-    'M. Computational & Modeling': ['model', 'computational', 'algorithm', 'simulation', 'neural network', 'deep learning', 'machine learning', 'predictive', 'bayesian', 'dynamical system', 'theory', 'optimization', 'prediction', 'manifold', 'complexity', 'artificial intelligence', 'robot control'],
-    'N. Robotics & Technology': ['robot', 'virtual reality', 'vr', 'exoskeleton', 'assistive', 'bmi', 'bci', 'wearable', 'haptic device', 'kinect', 'mri-compatible', 'technology', 'system design', 'interface', 'simulator', 'laparoscopy'],
-    'O. Clinical Conditions & Disease Models': ['parkinson', 'dystonia', 'ataxia', 'stroke', 'cerebral palsy', 'autism', 'schizophrenia', 'alzheimer', 'dementia', 'adhd', 'epilepsy', 'huntington', 'disease', 'disorder', 'syndrome', 'injury', 'lesion', 'hemiparesis', 'tremor', 'multiple sclerosis', 'ms', 'dcd', 'pain'],
-    'P. Rehabilitation & Therapy': ['rehabilitation', 'therapy', 'treatment', 'intervention', 'clinical', 'physical therapy', 'occupational therapy', 'cimt', 'music-supported', 'gait training', 'assistive', 'functional recovery', 'neurorehabilitation', 'prehab', 'neurodevelopmental treatment'],
-    'Q. Psychological Factors & Motivation': ['motivation', 'emotion', 'anxiety', 'self-efficacy', 'self-control', 'goal', 'stress', 'mindfulness', 'imagery', 'mental practice', 'mental-training', 'attitude', 'expectancy', 'psychology', 'social', 'confidence'],
-    'R. Timing & Rhythm': ['timing', 'rhythm', 'temporal', 'synchronization', 'metronome', 'interval', 'period', 'tempo', 'timing'],
-    'S. Research Methodology & Statistics': ['study', 'method', 'trial', 'experiment', 'analysis', 'anova', 'regression', 'statistic', 'measurement', 'assessment', 'test', 'scale', 'questionnaire', 'survey', 'reliability', 'validity', 'electrophysiology', 'quantitative', 'qualitative', 'bias', 'longitudinal', 'cross-sectional', 'head'],
-    'T. Human & Animal Subjects': ['human', 'animal', 'subject', 'patient', 'child', 'infant', 'adult', 'elderly', 'older', 'adolescent', 'male', 'female', 'mice', 'rat', 'monkey', 'primate', 'songbird', 'athlete', 'gamer', 'novice', 'expert', 'td', 'typical', 'population'],
-    'U. Vision & Oculomotor Control': ['saccade', 'eye movement', 'gaze', 'ocular', 'oculomotor', 'vor', 'visual tracking', 'visual field', 'vision', 'visual'],
-    'V. Speech & Language': ['speech', 'language', 'vocal', 'stutter', 'phonetics', 'pronunciation', 'grammar', 'tongue', 'articulation', 'singing', 'apraxia of speech', 'dysarthria', 'communication'],
-    'W. Development & Lifespan': ['development', 'aging', 'infancy', 'childhood', 'adolescence', 'postnatal', 'critical period', 'life-span', 'developmental coordination disorder', 'dcd', 'maturation', 'onset', 'developmental'],
-    'X. Imaging & Assessment Techniques': ['fmri', 'mri', 'eeg', 'meg', 'pet', 'dti', 'fnirs', 'electromyography', 'emg', 'biomechanics', 'posturography', 'kinematics', 'kinetics', 'assessment', 'test', 'scale', 'survey', 'imaging', 'spectroscopy', 'microscopy', 'analysis'],
-    'Z. Unclassified': ['( R )-(+)-[2,3-dihydro-5-methyl-3-(4-morpholinylmethyl)pyrrolo[1,2,3-de]-1,4-benzoxazin-6-yl]-1-naphthalenylmethanone mesylate', '2 S', '2', '212-2 mesylate', '2300', '2320', '2323', '2326', '2330', '2340', '2343', '3-dicarboxylic acid1s', '3-dicarboxylic acidt-acpd', '3-dicarboxylic acid±-trans-acpd', '3-dione', '3-dionecnqx', '3380', '3700', '3720', '3r)-1-aminocyclopentane-1', '4c3hpg', '5-dihydroxyphenilglycine', '7-nina', 'aida', 'ap-v (ap-5)', 'bapta', 'bis(2-aminophenoxy)ethane-n', 'chpg', 'cpccoet', 'dag', 'dcg-iv', 'dl-amino-5-phosphonopentanoic acid', 'dl-amino-5-phosphonopentanoic acidap-v ap-5', 'dnqx 6', 'dopamineda', 'egta', 'entopeduncular nucleusepn', 'epsp', 'ethylene glycol bisβ-aminoethyl ether-n', 'excitatory post-synaptic potentialepsp', 'g-protein coupled receptorgprc', 'gprc', 'hd', 'hfs', 'i-ltp', 'inositol-3-phosphateip3', 'ip3', 'l-2-amino-3-phosphonopropionatel-ap3', 'l-ap3', 'l-ccg-i', 'l-name', 'l-serine-o-phosphatel-sop', 'l-sop', 'ltd', 'mcp g', 'mglur', 'mglur1 knock-outmglur1-/-', 'mglur1-/-', 'mglur5 knock-outmglur5-/-', 'mglur5-/-', 'mma', 'mpep', 'msop', 'n', 'n′', 'o bis(2-aminoethyl)ethyleneglycol-n', 'nac', 'ng-nitro-l-arginine methylesterl-name', 'nmda', 'nos', 'nacl', 'protein phosphatase 1pp-1', 'rs-1-aminoindan-1', 'rs-2-chloro-5-hydroxyphenylglycinechpg', 's-α-methylserine-o-phosphatemsop', 's-4-carboxy-3-hydroxyphenylglycine4c3hpg', 's-4-carboxyphenylglycine4-cpg', 'snap', 'sd', 'snc/r', 'stn', 't-acpd', 'tea', 'tetrodotoxinttx', 'tpa', 'ttx', 'vdcc', '±-trans-1-aminocyclopentane-1', 'vdp']
+    'A. Neuroscience & Neuroanatomy': [
+        'brain', 'cortex', 'gyrus', 'lobe', 'striatum', 'thalamus', 'hippocampus', 'amygdala', 
+        'basal ganglia', 'cerebellum', 'nucleus', 'substantia nigra', 'putamen', 'caudate', 
+        'pallidus', 'ventricular', 'neocortex', 'corpus callosum', 'white matter', 'gray matter', 
+        'axon', 'dendrite', 'neuron', 'glia', 'meningeal', 'myelin', 'spinal cord', 'brainstem',
+        'colliculus', 'sulcus', 'tegmentum', 'red nucleus', 'olive', 'dentate', 'fastigial', 
+        'interposed', 'purkinje', 'granule cell', 'climbing fiber', 'mossy fiber', 'parallel fiber', 
+        'astrocyte', 'microglia', 'oligodendrocyte', 'schwann', 'node of ranvier', 'synapse', 
+        'spine', 'bouton', 'soma', 'intraparietal', 'supramarginal', 'precuneus', 'fusiform', 
+        'cingulate', 'entorhinal', 'subthalamic', 'prefrontal', 'motor cortex', 'sensory cortex', 
+        'parietal', 'temporal', 'frontal', 'occipital', 'insula', 'operculum', 'nerve', 'ganglion',
+        'corticospinal', 'pyramidal tract', 'extrapyramidal', 'neuroma', 'radiculopathy', 'plexus',
+        'subventricular', 'perineuronal', 'connectome', 'connectomics', 'cytoarchitecture'
+    ],
+    'B. Neuropharmacology & Biochemistry': [
+        'dopamine', 'serotonin', 'glutamate', 'gaba', 'acetylcholine', 'nicotinic', 'muscarinic', 
+        'nmda', 'ampa', 'neurotransmitter', 'receptor', 'chemical', 'molecule', 'drug', 'agonist', 
+        'antagonist', 'kinase', 'phosphatase', 'enzyme', 'cannabinoid', 'bdnf', 'l-dopa', 'protein', 
+        'peptide', 'dna', 'rna', 'gene', 'genetics', 'genomic', 'expression', 'molecular', 'cellular', 
+        'intracellular', 'extracellular', 'signaling', 'pathway', 'metabolism', 'metabolic', 
+        'mitochondria', 'calcium', 'potassium', 'sodium', 'chloride', 'ion channel', 'pump', 
+        'transporter', 'vesicle', 'synaptic', 'plasticity', 'neurotrophin', 'growth factor', 
+        'cytokine', 'chemokine', 'hormone', 'steroid', 'estrogen', 'testosterone', 'cortisol', 
+        'insulin', 'ghrelin', 'leptin', 'noradrenaline', 'norepinephrine', 'epinephrine', 'adrenaline', 
+        'histamine', 'adenosine', 'atp', 'adp', 'camp', 'cgmp', 'second messenger', 'g-protein',
+        'opioid', 'endocannabinoid', 'ligand', 'metabotropic', 'ionotropic', 'pharmaco', 'biomarker',
+        'oxidative stress', 'antioxidant', 'nootropic', 'botulinum', 'toxin'
+    ],
+    'C. Neurophysiology & Brain Activity': [
+        'eeg', 'meg', 'bold', 'oscillation', 'rhythm', 'alpha', 'beta', 'gamma', 'theta', 'delta', 
+        'mu rhythm', 'tau rhythm', 'wave', 'coherence', 'synchronization', 'desynchronization', 
+        'entrainment', 'phase', 'coupling', 'cross-frequency', 'evoked potential', 'mep', 'erp', 
+        'lfp', 'potential', 'firing', 'burst', 'power', 'resting-state', 'connectivity', 'granger', 
+        'spindle', 'ripple', 'sharp-wave', 'slow-wave', 'event-related', 'spectral', 'time-frequency', 
+        'electrophysiology', 'activity', 'activation', 'arousal', 'sleep stage', 'rem sleep'
+    ],
+    'D. Brain Stimulation & Intervention': [
+        'tms', 'tdcs', 'stimulation', 'microstimulation', 'optogenetic', 'chemogenetic', 
+        'electrical stimulation', 'epidural', 'neurostimulation', 'deep brain stimulation', 'dbs', 
+        'nibs', 'ct bs', 'tbs', 'tacs', 'trns', 'tfus', 'ultrasound stimulation', 'magnetic stimulation', 
+        'anodal', 'cathodal', 'sham', 'theta burst', 'paired-pulse', 'neuromodulation'
+    ],
+    'E. Motor Skills & Performance': [
+        'skill', 'performance', 'expertise', 'athlete', 'sport', 'tennis', 'golf', 'baseball', 
+        'basketball', 'soccer', 'swimming', 'dance', 'drawing', 'typing', 'handwriting', 'juggling', 
+        'kicking', 'throwing', 'aiming', 'reach', 'grasp', 'dexterity', 'musician', 'pianist', 
+        'surgeon', 'surgical skill', 'rowing', 'fencing', 'martial arts', 'suturing', 'volleyball', 
+        'football', 'rugby', 'hockey', 'cricket', 'gymnastics', 'running', 'walking', 'cycling', 
+        'skiing', 'skating', 'driving', 'piloting', 'gaming', 'esports', 'video game', 'playing', 
+        'music', 'instrument', 'violin', 'guitar', 'drumming', 'singing', 'fine motor', 'gross motor', 
+        'manual', 'bimanual', 'unimanual', 'prehension', 'locomotion', 'gait', 'balance', 'posture', 
+        'climbing', 'darts', 'archery', 'shooting', 'ball', 'racket', 'club', 'bat'
+    ],
+    'F. Motor Control & Execution': [
+        'motor control', 'control', 'kinematics', 'kinetics', 'force', 'torque', 'velocity', 
+        'acceleration', 'dynamics', 'trajectory', 'movement', 'posture', 'synergy', 'redundancy', 
+        'degrees of freedom', 'df', 'dof', 'inverse model', 'forward model', 'feedback', 'feedforward', 
+        'primitives', 'jerk', 'coordination', 'gait', 'balance', 'stability', 'variability', 
+        'precision', 'accuracy', 'error', 'deviation', 'correction', 'adjustment', 'execution', 
+        'planning', 'preparation', 'initiation', 'termination', 'sequencing', 'timing', 'rhythm', 
+        'synchronization', 'manipulation', 'effector', 'limb', 'joint', 'muscle', 'motor unit', 
+        'emg', 'electromyography', 'stiffness', 'impedance', 'compliance', 'viscosity', 'inertia', 
+        'center of mass', 'center of pressure', 'ground reaction', 'biomechanics'
+    ],
+    'G. Motor Learning: General/Theory': [
+        'motor learning', 'learning', 'skill acquisition', 'acquisition', 'retention', 'transfer', 
+        'generalization', 'theory', 'schema', 'consolidation', 'memory', 'savings', 're-learning', 
+        'automatization', 'practice', 'training', 'procedural learning', 'adaptation', 'aftereffect', 
+        'interference', 'facilitation', 'inhibition', 'plasticity', 'use-dependent', 'experience-dependent', 
+        'offline', 'online', 'fast learning', 'slow learning', 'stage', 'phase', 'curve', 'asymptote', 
+        'plateau'
+    ],
+    'H. Motor Learning: Mechanisms & Factors': [
+        'practice', 'feedback', 'instruction', 'knowledge of results', 'kr', 'knowledge of performance', 
+        'kp', 'schedule', 'variability', 'interference', 'contextual', 'dosage', 'error', 'amplification', 
+        'difficulty', 'guidance', 'repetition', 'spacing', 'massed', 'yoked', 'augmented', 'terminal', 
+        'concurrent', 'bandwidth', 'fading', 'summary', 'average', 'self-controlled', 'dyad', 'observational', 
+        'demonstration', 'modeling', 'mental practice', 'imagery', 'part-practice', 'whole-practice'
+    ],
+    'I. Implicit vs. Explicit Learning': [
+        'implicit', 'explicit', 'awareness', 'conscious', 'procedural', 'declarative', 'unconscious', 
+        'non-declarative', 'monitoring', 'controlled processing', 'automatic', 'automaticity', 
+        'dual-task', 'secondary task', 'cognitive load', 'working memory load', 'verbalization', 
+        'verbal report', 'rule', 'strategy', 'sequence learning', 'serial reaction time', 'srt'
+    ],
+    'J. Sensory & Perceptual Systems': [
+        'sensory', 'somatosensory', 'proprioception', 'proprioceptive', 'tactile', 'haptic', 
+        'auditory', 'vestibular', 'perception', 'integration', 'recalibration', 'cross-modal', 
+        'multisensory', 'senses', 'afferent', 'efferent', 'vision', 'visual', 'ocular', 'eye', 
+        'ear', 'skin', 'touch', 'sound', 'noise', 'vibration', 'temperature', 'nociception', 'pain', 
+        'gustatory', 'olfactory', 'psychophysics', 'threshold', 'discrimination', 'detection', 
+        'illusion', 'hallucination'
+    ],
+    'K. Plasticity & Adaptation': [
+        'plasticity', 'adaptation', 'ltp', 'ltd', 'potentiation', 'depression', 'metaplasticity', 
+        'reorganization', 're-organization', 'remapping', 'use-dependent', 'homeostatic', 'hebbian', 
+        'synaptic plasticity', 'structural plasticity', 'functional plasticity', 'recovery', 'repair', 
+        'regeneration', 'sprouting', 'pruning'
+    ],
+    'L. Cognition & Executive Function': [
+        'cognition', 'cognitive', 'attention', 'executive function', 'working memory', 'wm', 
+        'processing', 'load', 'task switch', 'mental', 'decision making', 'planning', 'control', 
+        'mind', 'reasoning', 'computational psychiatry', 'memory', 'inhibition', 'suppression', 
+        'updating', 'shifting', 'flexibility', 'intelligence', 'iq', 'aptitude', 'focus', 
+        'concentration', 'vigilance', 'awareness', 'consciousness', 'problem solving', 'creativity', 
+        'language', 'speech', 'semantic', 'episodic'
+    ],
+    'M. Computational & Modeling': [
+        'model', 'computational', 'algorithm', 'simulation', 'neural network', 'deep learning', 
+        'machine learning', 'predictive', 'bayesian', 'dynamical system', 'theory', 'optimization', 
+        'prediction', 'manifold', 'complexity', 'artificial intelligence', 'robot control', 
+        'classifier', 'decoder', 'encoding', 'decoding', 'dimensionality reduction', 'pca', 'ica', 
+        'lda', 'svm', 'regression', 'correlation', 'cluster', 'dynamics', 'attractor', 'bifurcation', 
+        'chaos', 'noise', 'stochastic', 'deterministic', 'linear', 'nonlinear', 'parameter', 
+        'estimation', 'kalman', 'markov', 'monte carlo'
+    ],
+    'N. Robotics & Technology': [
+        'robot', 'virtual reality', 'vr', 'exoskeleton', 'assistive', 'bmi', 'bci', 'wearable', 
+        'haptic device', 'kinect', 'mri-compatible', 'technology', 'system design', 'interface', 
+        'simulator', 'laparoscopy', 'teleoperation', 'telepresence', 'prosthesis', 'prosthetic', 
+        'orthosis', 'orthotic', 'device', 'sensor', 'actuator', 'manipulator', 'controller', 
+        'software', 'hardware', 'system', 'machine', 'computer', 'digital', 'engineering', 
+        'mechatronics', 'app', 'smartphone', 'tablet', 'camera', 'tracker', 'motion capture', 
+        'imu', 'accelerometer', 'gyroscope', 'magnetometer'
+    ],
+    'O. Clinical Conditions & Disease Models': [
+        'parkinson', 'dystonia', 'ataxia', 'stroke', 'cerebral palsy', 'autism', 'schizophrenia', 
+        'alzheimer', 'dementia', 'adhd', 'epilepsy', 'huntington', 'disease', 'disorder', 'syndrome', 
+        'injury', 'lesion', 'hemiparesis', 'tremor', 'multiple sclerosis', 'ms', 'dcd', 'pain', 
+        'neuropathy', 'radiculopathy', 'myopathy', 'amyotrophic lateral sclerosis', 'als', 'tumor', 
+        'cancer', 'oncology', 'trauma', 'tbi', 'concussion', 'psychiatric', 'depression', 'anxiety', 
+        'addiction', 'obesity', 'diabetes', 'cardiovascular', 'aging', 'frailty', 'impairment', 
+        'disability', 'handicap', 'pathology', 'diagnosis', 'prognosis', 'etiology', 'epidemiology'
+    ],
+    'P. Rehabilitation & Therapy': [
+        'rehabilitation', 'therapy', 'treatment', 'intervention', 'clinical', 'physical therapy', 
+        'occupational therapy', 'cimt', 'music-supported', 'gait training', 'assistive', 
+        'functional recovery', 'neurorehabilitation', 'prehab', 'neurodevelopmental treatment', 
+        'physiotherapy', 'training', 'exercise', 'practice', 'regimen', 'protocol', 'telehealth', 
+        'telerehab', 'remote', 'home-based', 'community-based', 'inpatient', 'outpatient'
+    ],
+    'Q. Psychological Factors & Motivation': [
+        'motivation', 'emotion', 'anxiety', 'self-efficacy', 'self-control', 'goal', 'stress', 
+        'mindfulness', 'imagery', 'mental practice', 'mental-training', 'attitude', 'expectancy', 
+        'psychology', 'social', 'confidence', 'affect', 'mood', 'personality', 'trait', 'state', 
+        'resilience', 'coping', 'burnout', 'fatigue', 'arousal', 'reward', 'punishment', 'incentive', 
+        'feedback', 'reinforcement'
+    ],
+    'R. Timing & Rhythm': [
+        'timing', 'rhythm', 'temporal', 'synchronization', 'metronome', 'interval', 'period', 
+        'tempo', 'beat', 'duration', 'speed', 'rate', 'frequency', 'latency', 'reaction time', 
+        'response time', 'movement time', 'onset', 'offset', 'asynchrony', 'jitter', 'delay'
+    ],
+    'S. Research Methodology & Statistics': [
+        'study', 'method', 'trial', 'experiment', 'analysis', 'anova', 'regression', 'statistic', 
+        'measurement', 'assessment', 'test', 'scale', 'questionnaire', 'survey', 'reliability', 
+        'validity', 'electrophysiology', 'quantitative', 'qualitative', 'bias', 'longitudinal', 
+        'cross-sectional', 'head', 'cohort', 'sample', 'population', 'data', 'variable', 'correlation', 
+        'causality', 'significance', 'p-value', 'confidence interval', 'effect size', 'power', 
+        'meta-analysis', 'review', 'synthesis', 'design', 'protocol', 'procedure', 'task', 
+        'paradigm', 'stimulus', 'response'
+    ],
+    'T. Human & Animal Subjects': [
+        'human', 'animal', 'subject', 'patient', 'child', 'infant', 'adult', 'elderly', 'older', 
+        'adolescent', 'male', 'female', 'mice', 'rat', 'monkey', 'primate', 'songbird', 'athlete', 
+        'gamer', 'novice', 'expert', 'td', 'typical', 'population', 'participant', 'volunteer', 
+        'student', 'man', 'woman', 'boy', 'girl', 'mouse', 'rodent', 'cat', 'dog', 'fish', 'fly', 
+        'worm', 'yeast', 'cell'
+    ],
+    'U. Vision & Oculomotor Control': [
+        'saccade', 'eye movement', 'gaze', 'ocular', 'oculomotor', 'vor', 'visual tracking', 
+        'visual field', 'vision', 'visual', 'pursuit', 'vergence', 'nystagmus', 'pupil', 'retina', 
+        'fovea', 'optic', 'blink', 'fixation', 'microsaccade', 'optokinetic'
+    ],
+    'V. Speech & Language': [
+        'speech', 'language', 'vocal', 'stutter', 'phonetics', 'pronunciation', 'grammar', 
+        'tongue', 'articulation', 'singing', 'apraxia of speech', 'dysarthria', 'communication', 
+        'voice', 'larynx', 'pharynx', 'oral', 'verbal', 'linguistic', 'phonology', 'syntax', 
+        'semantic', 'pragmatic', 'reading', 'writing', 'sign language'
+    ],
+    'W. Development & Lifespan': [
+        'development', 'aging', 'infancy', 'childhood', 'adolescence', 'postnatal', 'critical period', 
+        'life-span', 'developmental coordination disorder', 'dcd', 'maturation', 'onset', 
+        'developmental', 'growth', 'age', 'young', 'old', 'senior', 'pediatric', 'geriatric', 
+        'birth', 'death', 'epigenetic', 'prenatal', 'neonatal'
+    ],
+    'X. Imaging & Assessment Techniques': [
+        'fmri', 'mri', 'eeg', 'meg', 'pet', 'dti', 'fnirs', 'electromyography', 'emg', 
+        'biomechanics', 'posturography', 'kinematics', 'kinetics', 'assessment', 'test', 'scale', 
+        'survey', 'imaging', 'spectroscopy', 'microscopy', 'analysis', 'tomography', 'ultrasound', 
+        'x-ray', 'ct scan', 'scan', 'recording', 'monitoring', 'measurement', 'evaluation', 
+        'screening', 'diagnostic'
+    ],
+    'Z. Unclassified': [
+        # Specific chemicals and niche terms
+        '( R )-(+)-[2,3-dihydro-5-methyl-3-(4-morpholinylmethyl)pyrrolo[1,2,3-de]-1,4-benzoxazin-6-yl]-1-naphthalenylmethanone mesylate',
+        '2 S', '2', '212-2 mesylate', '2300', '2320', '2323', '2326', '2330', '2340', '2343', 
+        '3-dicarboxylic acid1s', '3-dicarboxylic acidt-acpd', '3-dicarboxylic acid±-trans-acpd', 
+        '3-dione', '3-dionecnqx', '3380', '3700', '3720', '3r)-1-aminocyclopentane-1', '4c3hpg', 
+        '5-dihydroxyphenilglycine', '7-nina', 'aida', 'ap-v (ap-5)', 'bapta', 
+        'bis(2-aminophenoxy)ethane-n', 'chpg', 'cpccoet', 'dag', 'dcg-iv', 
+        'dl-amino-5-phosphonopentanoic acid', 'dl-amino-5-phosphonopentanoic acidap-v ap-5', 
+        'dnqx 6', 'dopamineda', 'egta', 'entopeduncular nucleusepn', 'epsp', 
+        'ethylene glycol bisβ-aminoethyl ether-n', 'excitatory post-synaptic potentialepsp', 
+        'g-protein coupled receptorgprc', 'gprc', 'hd', 'hfs', 'i-ltp', 'inositol-3-phosphateip3', 
+        'ip3', 'l-2-amino-3-phosphonopropionatel-ap3', 'l-ap3', 'l-ccg-i', 'l-name', 
+        'l-serine-o-phosphatel-sop', 'l-sop', 'ltd', 'mcp g', 'mglur', 'mglur1 knock-outmglur1-/-', 
+        'mglur1-/-', 'mglur5 knock-outmglur5-/-', 'mglur5-/-', 'mma', 'mpep', 'msop', 'n', 'n′', 
+        'o bis(2-aminoethyl)ethyleneglycol-n', 'nac', 'ng-nitro-l-arginine methylesterl-name', 
+        'nmda', 'nos', 'nacl', 'protein phosphatase 1pp-1', 'rs-1-aminoindan-1', 
+        'rs-2-chloro-5-hydroxyphenylglycinechpg', 's-α-methylserine-o-phosphatemsop', 
+        's-4-carboxy-3-hydroxyphenylglycine4c3hpg', 's-4-carboxyphenylglycine4-cpg', 'snap', 
+        'sd', 'snc/r', 'stn', 't-acpd', 'tea', 'tetrodotoxinttx', 'tpa', 'ttx', 'vdcc', 
+        '±-trans-1-aminocyclopentane-1', 'vdp',
+        
+        # Noise/Nonsense terms from error list
+        'lavenders', 'flower petals', 'sunflower seeds', 'chf swiss francs', 'cardinal numbers', 
+        'autographs', 'plastics', 'startup costs', 'wages', 'likes & dislikes', 'non-fungible tokens', 
+        'airplanes', 'helicopters', 'railroads', 'ships', 'submarines', 'trucks', 'vans', 
+        'automobiles', 'bicycles', 'tricycles', 'skateboards', 'roller skates', 'ice skates', 
+        'skis', 'snowboards', 'sleds', 'phronesis', 'monoculars', 'spurious limits', 
+        'likes & dislikes', '2 s', '1s'
+    ]
 }
+# def find_categories_for_keyword(keyword):
+#     for category, terms in CATEGORIES.items():
+#         if keyword in category:
 
 # Function for multi-label classification
 def classify_keyword_multi_label(keyword):
+    unknown_words = set([])
     kw_lower = keyword.lower()
     matched_categories = []
 
     # Check for unclassified first (exact match only for highly specific, fragmented terms)
     # The 'Z. Unclassified' list contains items the user explicitly mentioned or are fragments.
-    if keyword in CATEGORIES['Z. Unclassified']:
+    if kw_lower in [unclassified_term.lower() for unclassified_term in CATEGORIES['Z. Unclassified']]:
         return ['Z. Unclassified']
 
     # Iterate through all categories and assign ALL matches (multi-label)
     for category, terms in CATEGORIES.items():
         if category == 'Z. Unclassified':
             continue  # Skip checking general keywords against the unclassified list
-
-        # General approach: check if any term is a substring
-        if any(term in kw_lower for term in terms):
+        # if kw_lower in [term.lower() for term in terms]:
+        #     matched_categories.append(category)
+        if any(term.lower() in kw_lower for term in terms):
             matched_categories.append(category)
     
     # If no matches found in any category, assign to unclassified (catch-all for new ambiguous terms)
     if not matched_categories:
+        # print(f"couldn't find match for {kw_lower}")
+        with open("unknown_words.txt", 'a') as f:
+            f.write(keyword)
+            f.write('\n')
         return ['Z. Unclassified']
     
     # Remove duplicates and sort for consistency
@@ -69,8 +275,10 @@ except FileNotFoundError:
     keywords = []
 
 # delete the first two since they are the title of the file
+
 keywords.pop(0)
 keywords.pop(0)
+
 # Create CSV output
 output_data = []
 for keyword in keywords:
