@@ -46,3 +46,4 @@ embedding_keywords/embedded_categories.csv
 embedding_keywords/embedded_keywords.csv
 .vscode/
 keywords_histograms_old_old.zip
+errors_in_classifying_keywords.txt.old
