@@ -36,3 +36,13 @@ errors_in_classifying_keywo_unnormalized.txt
 errors_in_classifying_keywords.txt
 errors_in_classifying_keywords_normalized.txt
 .vscode/launch.json
+keywords_histograms_try_broad/
+mlexperiments/
+mlruns/
+unknown_words.txt
+embedding_keywords/all_keywords_processed.txt
+embedding_keywords/classified_embedded_keywords.csv
+embedding_keywords/embedded_categories.csv
+embedding_keywords/embedded_keywords.csv
+.vscode/
+keywords_histograms_old_old.zip
