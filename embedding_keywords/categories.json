@@ -1,0 +1,126 @@
+{
+  "A. Neuroscience & Neuroanatomy": {
+    "definition": "Brain and nervous-system structures, neural anatomy, cell types, and anatomical pathways.",
+    "examples": ["cortex", "hippocampus", "amygdala", "basal ganglia", "axon", "synapse"]
+  },
+
+  "B. Neuropharmacology & Biochemistry": {
+    "definition": "Neurochemicals, neurotransmitters, receptors, intracellular signaling molecules, and pharmacological agents.",
+    "examples": ["dopamine", "serotonin", "NMDA receptor", "agonist", "kinase", "hormone"]
+  },
+
+  "C. Neurophysiology & Brain Activity": {
+    "definition": "Electrical and physiological brain activity, oscillations, evoked potentials, and electrophysiological measures.",
+    "examples": ["EEG", "MEG", "alpha rhythm", "ERP", "firing", "connectivity"]
+  },
+
+  "D. Brain Stimulation & Intervention": {
+    "definition": "Noninvasive or invasive neuromodulation and stimulation techniques.",
+    "examples": ["TMS", "tDCS", "deep brain stimulation", "optogenetic", "neuromodulation"]
+  },
+
+  "E. Motor Skills & Performance": {
+    "definition": "Skilled movement activities, sports, artistic performance, and motor abilities.",
+    "examples": ["tennis", "drawing", "juggling", "musician", "typing", "balance"]
+  },
+
+  "F. Motor Control & Execution": {
+    "definition": "Mechanics and control of movement, including kinematics, dynamics, forces, and muscle activation.",
+    "examples": ["kinematics", "force", "trajectory", "EMG", "coordination", "feedback"]
+  },
+
+  "G. Motor Learning: General/Theory": {
+    "definition": "Theoretical concepts of motor skill learning, memory, acquisition, and performance change.",
+    "examples": ["motor learning", "retention", "transfer", "consolidation", "practice"]
+  },
+
+  "H. Motor Learning: Mechanisms & Factors": {
+    "definition": "Specific variables that influence motor learning, including feedback, schedule, difficulty, and instruction.",
+    "examples": ["feedback", "KR", "variability", "guidance", "spacing", "imagery"]
+  },
+
+  "I. Implicit vs. Explicit Learning": {
+    "definition": "Awareness, cognitive load, and the distinction between conscious and unconscious learning processes.",
+    "examples": ["implicit", "explicit", "dual-task", "verbalization", "working memory load"]
+  },
+
+  "J. Sensory & Perceptual Systems": {
+    "definition": "Sensory modalities and perceptual processes including proprioception, tactile, auditory, visual, and multisensory.",
+    "examples": ["proprioception", "tactile", "auditory", "vision", "psychophysics"]
+  },
+
+  "K. Plasticity & Adaptation": {
+    "definition": "Neural plasticity mechanisms, adaptation, synaptic changes, and reorganization.",
+    "examples": ["LTP", "LTD", "metaplasticity", "synaptic plasticity", "remapping"]
+  },
+
+  "L. Cognition & Executive Function": {
+    "definition": "Cognitive processes such as attention, working memory, decision-making, reasoning, and inhibition.",
+    "examples": ["attention", "working memory", "planning", "inhibition", "language"]
+  },
+
+  "M. Computational & Modeling": {
+    "definition": "Mathematical models, machine learning, neural networks, optimization, and computational analyses.",
+    "examples": ["simulation", "Bayesian", "deep learning", "PCA", "regression"]
+  },
+
+  "N. Robotics & Technology": {
+    "definition": "Robotics, devices, sensors, virtual reality systems, interfaces, and assistive technologies.",
+    "examples": ["robot", "VR", "exoskeleton", "wearable", "prosthesis", "sensor"]
+  },
+
+  "O. Clinical Conditions & Disease Models": {
+    "definition": "Neurological, psychiatric, developmental, metabolic, and medical disorders or disease states.",
+    "examples": ["Parkinson's", "stroke", "autism", "schizophrenia", "diabetes"]
+  },
+
+  "P. Rehabilitation & Therapy": {
+    "definition": "Therapeutic interventions, rehabilitation programs, clinical treatments, and recovery protocols.",
+    "examples": ["rehabilitation", "physical therapy", "gait training", "exercise", "protocol"]
+  },
+
+  "Q. Psychological Factors & Motivation": {
+    "definition": "Emotional, motivational, psychological, and affective influences on behavior and learning.",
+    "examples": ["motivation", "stress", "self-efficacy", "reward", "fatigue"]
+  },
+
+  "R. Timing & Rhythm": {
+    "definition": "Temporal aspects of movement and perception, including rhythm, timing, and reaction time.",
+    "examples": ["timing", "tempo", "latency", "interval", "reaction time"]
+  },
+
+  "S. Research Methodology & Statistics": {
+    "definition": "Experimental design, statistical analysis, measurement tools, and research methods.",
+    "examples": ["ANOVA", "effect size", "questionnaire", "protocol", "sample"]
+  },
+
+  "T. Human & Animal Subjects": {
+    "definition": "Human and animal populations used in research, including demographic descriptors.",
+    "examples": ["patient", "child", "rat", "primate", "adult", "athlete"]
+  },
+
+  "U. Vision & Oculomotor Control": {
+    "definition": "Visual processing and control of eye movements.",
+    "examples": ["saccade", "gaze", "pursuit", "vergence", "nystagmus"]
+  },
+
+  "V. Speech & Language": {
+    "definition": "Speech production, language processing, communication, and vocal articulation.",
+    "examples": ["speech", "grammar", "phonetics", "apraxia", "vocal"]
+  },
+
+  "W. Development & Lifespan": {
+    "definition": "Developmental stages, aging, maturation, and lifespan-related processes.",
+    "examples": ["childhood", "adolescence", "aging", "prenatal", "maturation"]
+  },
+
+  "X. Imaging & Assessment Techniques": {
+    "definition": "Imaging, recording, measurement, and quantitative assessment tools.",
+    "examples": ["MRI", "fMRI", "DTI", "EMG", "ultrasound"]
+  },
+
+  "Z. Unclassified": {
+    "definition": "Terms that do not fit scientific, neurological, motor, clinical, or methodological domains.",
+    "examples": ["chemical catalog numbers", "non-scientific nouns", "vehicles", "miscellaneous"]
+  }
+}
