@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Generate one histogram per modularity class counting keyword frequencies.
+"""Generate one histogram per modularity class counting canonical keyword frequencies.
 
 Usage:
     python scripts/keywords_histograms_by_modularity.py path/to/graph.gexf
 
 The script will create PNG files (one per modularity class present in the
-graph and defined in the mapping) and CSV files with full keyword counts.
+graph and defined in the mapping) and CSV files with full keyword counts, 
+grouped by synonyms.
 """
 import re
 import sys
+import json # New import for JSON loading
 from pathlib import Path
 from collections import Counter, defaultdict
 
@@ -150,17 +152,54 @@ def split_keywords(keywords_value: str):
 
 
 def normalize_keyword(keyword: str) -> str:
-    """Normalize a keyword to lowercase and remove trailing 's' if possible."""
-    keyword = keyword.lower()
-    # if keyword.endswith('s') and len(keyword) > 1 and not keyword.endswith('ss'):
-    #     # Simple heuristic to remove plural 's', but avoid issues with 'mass'
-    #     return keyword[:-1]
-    return keyword
+    """Normalize a keyword to lowercase."""
+    return keyword.lower()
 
-def normalize_plural(keyword: str) -> str:
-    """Normalize a keyword by removing trailing 's' if singular/plural differ only by 's'."""
-    # NOTE: The implementation of normalize_keyword is slightly better for this purpose.
-    return normalize_keyword(keyword)
+
+# --- New Function to Load Synonym Data ---
+def load_synonym_data(json_path: Path) -> dict:
+    """Load the synonym dictionary from a JSON file."""
+    if not json_path.exists():
+        print(f"Error: Synonym dictionary file not found at {json_path}. Please create it.")
+        return {}
+    
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            synonym_dict = json.load(f)
+        print(f"Loaded {len(synonym_dict)} synonym groups from {json_path.name}.")
+        return synonym_dict
+    except Exception as e:
+        print(f"Error reading or processing {json_path}: {e}")
+        return {}
+# ----------------------------------------
+
+
+# --- New Function to Create Canonical Map ---
+def load_synonym_map(synonym_dict: dict) -> dict:
+    """
+    Creates a canonical keyword map where all synonyms point to a single
+    chosen representative (the normalized name of the original dictionary key).
+    The keys and values in the map are normalized (lowercase).
+    """
+    canonical_map = {}
+    
+    for key, values in synonym_dict.items():
+        # The key is chosen as the canonical form for that group
+        canonical_name = normalize_keyword(key)
+        
+        # Variants include the key itself and all listed values
+        all_variants = [key] + values
+        
+        for variant in all_variants:
+            norm_variant = normalize_keyword(variant)
+            # Only set the canonical map if the variant hasn't been mapped yet.
+            # This ensures that if 'A': ['B'] and 'C': ['D'] overlap, 
+            # the first one encountered sets the canonical name.
+            if norm_variant not in canonical_map:
+                 canonical_map[norm_variant] = canonical_name
+    
+    return canonical_map
+# ------------------------------------------
 
 
 def load_category_mapping(csv_path: Path) -> dict:
@@ -195,7 +234,16 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
     G = nx.read_gexf(gexf_path)
     out_dir.mkdir(parents=True, exist_ok=True)
     
-    # --- NEW: Load the broad category mapping ---
+    # 1. Load Synonym Data and Create Map
+    synonym_dict_path =  Path('embedding_keywords')/"keyword_synonyms_0.99_with_transitivity.json"
+    synonym_data = load_synonym_data(synonym_dict_path)
+    if not synonym_data:
+        print("Cannot proceed without synonym data.")
+        return
+    synonym_map = load_synonym_map(synonym_data)
+    print(f"Created canonical map for {len(synonym_map)} unique keyword variants.")
+    
+    # 2. Load the broad category mapping
     category_csv_path = Path("keyword_classification_25_categories.csv")
     category_mapping = load_category_mapping(category_csv_path)
 
@@ -206,9 +254,9 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
 
     print(f"Using modularity attribute: '{attr}'")
 
-    # Collect keywords and broad categories per class
-    class_keyword_counts = defaultdict(Counter)
-    class_category_counts = defaultdict(Counter) # NEW
+    # Collect canonical keywords and broad categories per class
+    class_canonical_keyword_counts = defaultdict(Counter) 
+    class_category_counts = defaultdict(Counter)
     seen_classes = set()
 
     terms_not_found_in_categories = set([])
@@ -223,47 +271,50 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         except Exception:
             cls_int = cls
         seen_classes.add(cls_int)
+        
         keywords = data.get("keywords") or data.get("Keywords") or data.get("KEYWORDS")
         terms = split_keywords(keywords)
         
-        # --- ORIGINAL KEYWORD COUNTING ---
+        # Process terms: normalize and find canonical form
         normalized_terms = [normalize_keyword(t) for t in terms]
-        # normalized_terms = terms
-        class_keyword_counts[cls_int].update(normalized_terms)
-        
-        # --- NEW BROAD CATEGORY COUNTING ---
+        canonical_terms = []
         for term in normalized_terms:
-            # Look up the broad categories for the normalized keyword
-            broad_categories = category_mapping.get(term)
+            # Get the canonical form, falling back to the term itself if not in the synonym list
+            canonical_term = synonym_map.get(term, term)
+            canonical_terms.append(canonical_term)
+            
+            # Use the canonical term for looking up broad categories
+            broad_categories = category_mapping.get(canonical_term)
             if broad_categories:
-                # Count each broad category this keyword belongs to
-                class_category_counts[cls_int].update(broad_categories)
+                 class_category_counts[cls_int].update(broad_categories)
             else: 
-                terms_not_found_in_categories.add(term)
+                 terms_not_found_in_categories.add(canonical_term)
+
+        # Count the canonical forms
+        class_canonical_keyword_counts[cls_int].update(canonical_terms)
+        
     with open("errors_in_classifying_keywords.txt", 'w') as f:
-        for term in terms_not_found_in_categories:
+        f.write("Canonical keywords not found in 'keyword_classification_25_categories.csv':\n")
+        for term in sorted(terms_not_found_in_categories):
             f.write(term)
             f.write('\n')
-    # print(f"couldn't find word: {term}")
-
-
     
-    # --- ORIGINAL PLOTTING LOOP: Raw Keywords ---
-    print("\n--- Generating Raw Keyword Histograms ---")
+    # --- PLOTTING LOOP: Canonical Keywords (Synonym Groups) ---
+    print("\n--- Generating Canonical Keyword Histograms (Synonym Groups) ---")
     for cls, meta in MODULARITY_META.items():
         if cls not in seen_classes:
             print(f"Class {cls} not present in graph, skipping")
             continue
 
-        counts = class_keyword_counts.get(cls, Counter())
+        counts = class_canonical_keyword_counts.get(cls, Counter())
         if not counts:
-            print(f"No keywords found for class {cls}, skipping plot")
+            print(f"No canonical keywords found for class {cls}, skipping plot")
             continue
 
-        # Save full counts to CSV (format keywords in Title Case for presentation)
-        csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(meta['label'])}.csv"
+        # Save full counts to CSV
+        csv_path = out_dir / f"canonical_keywords_counts_mod_{cls}_{sanitize_filename(meta['label'])}.csv" 
         df = pd.DataFrame(counts.most_common(), columns=["keyword", "count"]) 
-        df["keyword"] = df["keyword"].str.title()
+        df["keyword"] = df["keyword"].str.title() 
         df.to_csv(csv_path, index=False)
 
         # Plot top N
@@ -274,17 +325,17 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         plt.figure(figsize=(10, max(4, len(labels) * 0.25)))
         color = meta.get('color', '#333333')
         plt.barh(labels, values, color=color)
-        plt.xlabel('Frequency')
-        plt.title(meta.get('displaylabel', meta.get('label', f'Modularity {cls}')) + " (Raw Keywords)")
+        plt.xlabel('Frequency (Synonyms Grouped)') 
+        plt.title(meta.get('displaylabel', meta.get('label', f'Modularity {cls}')) + " (Canonical Keywords)")
         plt.tight_layout()
 
-        png_path = out_dir / f"keywords_hist_mod_{cls}_{sanitize_filename(meta['label'])}.png"
+        png_path = out_dir / f"canonical_keywords_hist_mod_{cls}_{sanitize_filename(meta['label'])}.png"
         plt.savefig(png_path, dpi=150)
         plt.close()
 
-        print(f"Saved histogram and CSV for class {cls}: {png_path}, {csv_path}")
+        print(f"Saved canonical histogram and CSV for class {cls}: {png_path}, {csv_path}")
 
-    # --- NEW PLOTTING LOOP: Broad Categories ---
+    # --- PLOTTING LOOP: Broad Categories (Remains the same) ---
     print("\n--- Generating Broad Category Histograms ---")
     for cls, meta in MODULARITY_META.items():
         if cls not in seen_classes:
@@ -300,12 +351,11 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         df = pd.DataFrame(counts.most_common(), columns=["category", "count"]) 
         df.to_csv(csv_path, index=False)
 
-        # Plot top N (use all categories if less than top_n)
+        # Plot top N 
         top = df.head(top_n)
         labels = top['category'].tolist()[::-1]
         values = top['count'].tolist()[::-1]
 
-        # Use a consistent color for categories, or meta['color']
         plt.figure(figsize=(10, max(4, len(labels) * 0.25)))
         color = meta.get('color', '#999999')
         plt.barh(labels, values, color=color)
@@ -320,40 +370,36 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
         print(f"Saved broad category histogram and CSV for class {cls}: {png_path}, {csv_path}")
 
 
-    # Handle unmapped classes (Modified to include both raw and broad category saving)
+    # Handle unmapped classes (Modified to include both canonical and broad category saving)
     unmapped = [c for c in seen_classes if c not in MODULARITY_META]
     for cls in unmapped:
-        # 1. Raw Keywords
-        counts_kw = class_keyword_counts.get(cls, Counter())
-        if counts_kw:
-            label = f"Modularity_{cls}"
-            csv_path = out_dir / f"keywords_counts_mod_{cls}_{sanitize_filename(label)}.csv"
-            df = pd.DataFrame(counts_kw.most_common(), columns=["keyword", "count"]) 
-            df["keyword"] = df["keyword"].str.title()
-            df.to_csv(csv_path, index=False)
-            # Plotting logic... (omitted here for brevity, included in original script)
-            # print(f"Saved CSV for unmapped class {cls} (Keywords): {csv_path}")
-            
-        # 2. Broad Categories (NEW)
-        counts_cat = class_category_counts.get(cls, Counter())
-        if counts_cat:
-            label = f"Modularity_{cls}"
-            csv_path = out_dir / f"categories_counts_mod_{cls}_{sanitize_filename(label)}.csv"
-            df = pd.DataFrame(counts_cat.most_common(), columns=["category", "count"]) 
-            df.to_csv(csv_path, index=False)
-            # Plotting logic... (omitted here for brevity, included in original script)
-            # print(f"Saved CSV for unmapped class {cls} (Categories): {csv_path}")
+      # 1. Canonical Keywords
+      counts_kw = class_canonical_keyword_counts.get(cls, Counter())
+      if counts_kw:
+          label = f"Modularity_{cls}"
+          csv_path = out_dir / f"canonical_keywords_counts_mod_{cls}_{sanitize_filename(label)}.csv"
+          df = pd.DataFrame(counts_kw.most_common(), columns=["keyword", "count"]) 
+          df["keyword"] = df["keyword"].str.title()
+          df.to_csv(csv_path, index=False)
+          # Plotting logic for unmapped class           
+      # 2. Broad Categories
+      counts_cat = class_category_counts.get(cls, Counter())
+      if counts_cat:
+          label = f"Modularity_{cls}"
+          csv_path = out_dir / f"categories_counts_mod_{cls}_{sanitize_filename(label)}.csv"
+          df = pd.DataFrame(counts_cat.most_common(), columns=["category", "count"]) 
+          df.to_csv(csv_path, index=False)
+          # Plotting logic for unmapped class
 
-    # Generate QA report: all unique keywords processed (Original logic)
+    # Generate QA report: all unique CANONICAL keywords processed
     all_keywords = set()
-    for counts in class_keyword_counts.values():
+    for counts in class_canonical_keyword_counts.values():
         all_keywords.update(counts.keys())
 
-    # present QA keywords in Title Case
     all_keywords_sorted = sorted(all_keywords)
-    qa_path = out_dir / "all_keywords_processed.txt"
+    qa_path = out_dir / "all_canonical_keywords_processed.txt"
     with open(qa_path, 'w') as f:
-        f.write(f"Total unique keywords processed: {len(all_keywords_sorted)}\n")
+        f.write(f"Total unique CANONICAL keywords processed: {len(all_keywords_sorted)}\n")
         f.write("=" * 80 + "\n\n")
         for kw in all_keywords_sorted:
             f.write(f"{kw.title()}\n")
@@ -370,9 +416,13 @@ def main(argv):
         return 1
     out_dir = Path(argv[2]) if len(argv) > 2 else gexf_path.parent / "keywords_histograms"
     
-    # Check for the required CSV file
+    # Check for required files
     if not Path("keyword_classification_25_categories.csv").exists():
         print("Error: Required classification file 'keyword_classification_25_categories.csv' not found.")
+        return 1
+        
+    if not  Path('embedding_keywords',"keyword_synonyms_0.99_with_transitivity.json").exists(): # Check for the new JSON file
+        print("Error: Required synonym dictionary file 'synonym_dict.json' not found.")
         return 1
         
     # --- Execute the histogram generation ---
