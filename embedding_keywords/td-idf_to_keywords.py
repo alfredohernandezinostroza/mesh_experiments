@@ -7,20 +7,58 @@ import json
 from collections import defaultdict, Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# --- Assume these helpers are imported or defined (essential for processing) ---
 
 def normalize_keyword(keyword: str) -> str:
     """Normalize a keyword to lowercase."""
     return keyword.lower()
 
 def split_keywords(keywords_value: str):
-    """Split a keywords string into individual keywords (using robust logic)."""
-    # NOTE: Using simplified splitting here for brevity, but use your original 
-    # robust split_keywords function that handles parentheses/brackets.
-    if keywords_value is None or pd.isna(keywords_value):
+    """Split a keywords string into individual keywords. Returns list of cleaned keywords.
+    
+    Keywords are split only by commas that are NOT inside parentheses or square brackets.
+    """
+    if keywords_value is None:
         return []
-    # Simplified splitting logic (replace with your robust version)
-    return [k.strip() for k in str(keywords_value).split(',') if k.strip()]
+    if pd.isna(keywords_value):
+        return []
+    s = str(keywords_value).strip()
+    if not s:
+        return []
+    
+    # Split by commas that are not inside parentheses or square brackets
+    parts = []
+    current = []
+    paren_depth = 0
+    bracket_depth = 0
+    for char in s:
+        if char == '(':
+            paren_depth += 1
+            current.append(char)
+        elif char == ')':
+            paren_depth -= 1
+            current.append(char)
+        elif char == '[':
+            bracket_depth += 1
+            current.append(char)
+        elif char == ']':
+            bracket_depth -= 1
+            current.append(char)
+        elif char == ',' and paren_depth == 0 and bracket_depth == 0:
+            # this is a delimiter comma
+            part = ''.join(current).strip()
+            if part:
+                parts.append(part)
+            current = []
+        else:
+            current.append(char)
+    
+    # add remaining part
+    if current:
+        part = ''.join(current).strip()
+        if part:
+            parts.append(part)
+    
+    return parts
 
 # --- New Function to Load Synonym Data ---
 def load_synonym_data(json_path: Path) -> dict:
@@ -39,8 +77,6 @@ def load_synonym_data(json_path: Path) -> dict:
         return {}
 # ----------------------------------------
 
-
-# --- New Function to Create Canonical Map ---
 def load_synonym_map(synonym_dict: dict) -> dict:
     """
     Creates a canonical keyword map where all synonyms point to a single
@@ -66,7 +102,6 @@ def load_synonym_map(synonym_dict: dict) -> dict:
     
     return canonical_map
 # ------------------------------------------
-
 def calculate_canonical_tfidf(gexf_file: str, synonym_dict_path: Path):
     
     # 1. Load Data
@@ -80,67 +115,105 @@ def calculate_canonical_tfidf(gexf_file: str, synonym_dict_path: Path):
     synonym_data = load_synonym_data(synonym_dict_path)
     synonym_map = load_synonym_map(synonym_data)
     
-    # 3. Rewrite Corpus using Canonical Keywords
+    # 3. Initialize QA Log
+    # Maps: Raw Term -> Canonical Term
+    qa_log = {} 
+    
+    # 4. Rewrite Corpus using Canonical Keywords
     print("Rewriting corpus using canonical keywords...")
     canonical_corpus = []
+    all_canonical_keywords = set([])
 
-    for raw_keywords_str in df['Keywords']:
+    for index, raw_keywords_str in enumerate(df['Keywords']):
+        
         # a. Split the raw string into individual keywords
+        # Use a defaultdict here to track processing per paper
         terms = split_keywords(raw_keywords_str)
         
         # b. Normalize each term and map it to its canonical form
         canonical_terms = []
-        for term in terms:
-            norm_term = normalize_keyword(term)
+        
+        for raw_term in terms:
+            norm_term = normalize_keyword(raw_term)            
             # Use the canonical map, falling back to the term itself if not found
             canonical_term = synonym_map.get(norm_term, norm_term)
             canonical_terms.append(canonical_term)
+            all_canonical_keywords.update([canonical_term])
             
-        # c. Reconstruct the document string using canonical terms, separated by spaces
+            # --- QA Logging ---
+            # Log the mapping: Raw Term (original case/form) -> Canonical Term
+            # This helps track exactly what came from the GEXF and what it became.
+            if raw_term not in qa_log:
+                qa_log[raw_term] = canonical_term
+            # Optional: Check for inconsistent mapping (if the same raw_term somehow maps to different canonical_terms)
+            elif qa_log[raw_term] != canonical_term:
+                print(f"Warning: Inconsistent canonical mapping detected for raw term '{raw_term}'. Mapped to '{qa_log[raw_term]}' and now '{canonical_term}'.")
+
+            
+         # c. Reconstruct the document string using canonical terms, separated by spaces
         # The TfidfVectorizer will treat each space-separated canonical term as a feature (token)
-        canonical_doc = " ".join(canonical_terms)
+        canonical_doc = "\t".join(canonical_terms)
         canonical_corpus.append(canonical_doc)
 
-    # 4. Apply TfidfVectorizer to the Canonical Corpus
-    print("Fitting TfidfVectorizer to the canonical corpus...")
+    # 5. Save the QA Log file
+    out_dir = Path("td-idf_results")
+    out_dir.mkdir(exist_ok=True)
+
+    qa_log_path = out_dir/"qa_canonical_keyword_mapping.json"
+    print(f"\nSaving QA log to: {qa_log_path}")
     
-    # We must use a simple tokenizer because our "tokens" are already canonical terms
-    # that may contain spaces (e.g., "action representation").
-    # TfidfVectorizer's default tokenizer splits by space, which is what we want here, 
-    # but we must ensure we don't apply further preprocessing if our terms have hyphens, etc.
+    # Sort for cleaner presentation
+    sorted_qa_log = dict(sorted(qa_log.items()))
+    
+    with open(qa_log_path, 'w', encoding='utf-8') as f:
+        json.dump(sorted_qa_log, f, indent=4, ensure_ascii=False)
+    print(f"Total unique raw keywords processed and logged: {len(qa_log)}")
+
+    # 5.1 Generate QA report: all unique CANONICAL keywords processed
+    # all_keywords = set(canonical_corpus)
+    all_keywords_sorted = sorted(all_canonical_keywords)
+    qa_path = out_dir / "all_canonical_keywords_processed.txt"
+    with open(qa_path, 'w') as f:
+        f.write(f"Total unique CANONICAL keywords processed: {len(all_keywords_sorted)}\n")
+        f.write("=" * 80 + "\n\n")
+        for kw in all_keywords_sorted:  
+            f.write(f"{kw.title()}\n")
+    print(f"\nQA report saved to: {qa_path}")
+
+
+    # 6. Apply TfidfVectorizer to the Canonical Corpus
+    print("\nFitting TfidfVectorizer to the canonical corpus...")
+    
     vectorizer = TfidfVectorizer(
-        tokenizer=lambda x: x.split(' '), # Split by space
-        token_pattern=None,              # Disable default regex pattern
-        lowercase=False                  # Canonical terms are already lowercase
+        tokenizer=lambda x: x.split('\t'), 
+        token_pattern=None,              
+        lowercase=False                  
     )
     
     X = vectorizer.fit_transform(canonical_corpus)
     
-    # 5. Output Results
+    # 7. Output Results (Rest of the script remains the same)
     print("\n--- Results ---")
     
-    # The feature names are the unique canonical keywords
     feature_names = vectorizer.get_feature_names_out()
     print(f"Total unique canonical keywords (features): {len(feature_names)}")
     
     # Show example (first paper)
-    paper_index = 0
-    paper_id = df.loc[paper_index, 'ID_String']
-    print(f"\nExample Paper ID: {paper_id}")
-    
-    # Get the vector for the first paper
-    paper_vector = X[paper_index].toarray().flatten()
-    
-    # Map features to their TD-IDF score
-    scores = pd.Series(paper_vector, index=feature_names)
-    scores = scores[scores > 0].sort_values(ascending=False)
-    
-    print(f"Highest TD-IDF scores (first paper):\n{scores.head(10)}")
-    print(f"\nSum of TD-IDF scores for the first paper (normalized L2 norm): {np.sum(paper_vector**2)}")
+    if X.shape[0] > 0:
+        paper_index = 0
+        paper_id = df.loc[paper_index, 'ID_String']
+        print(f"\nExample Paper ID: {paper_id}")
+        
+        paper_vector = X[paper_index].toarray().flatten()
+        
+        scores = pd.Series(paper_vector, index=feature_names)
+        scores = scores[scores > 0].sort_values(ascending=False)
+        
+        print(f"Highest TD-IDF scores (first paper):\n{scores.head(10)}")
+        print(f"\nSum of TD-IDF scores for the first paper (normalized L2 norm): {np.sum(paper_vector**2)}")
     
     return X, vectorizer, df
 
-# --- Execution ---
 gexf_file = "filtered_with_transferred_mesh_fixed_fix_commas.gexf"
 synonym_dict_path = Path('embedding_keywords')/"keyword_synonyms_0.99_with_transitivity.json"
 
