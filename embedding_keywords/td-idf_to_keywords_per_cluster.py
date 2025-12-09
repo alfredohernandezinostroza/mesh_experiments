@@ -6,20 +6,85 @@ from pathlib import Path
 import json 
 from collections import defaultdict, Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
+import matplotlib.pyplot as plt
 
 OUT_DIR = Path("td-idf_results")
 OUT_DIR.mkdir(exist_ok=True)
 
-def save_results(X, vectorizer, df):
+def save_results(X, vectorizer, df, top_n=20):
+    """
+    Calculates the TF-IDF scores for each cluster, saves the full results
+    to a CSV, and generates a histogram for the top N keywords.
+    """
+    print("\n--- Generating TF-IDF Histograms and CSVs ---")
+    
     feature_names = vectorizer.get_feature_names_out()
+    
+    # --- Robust Cluster ID Mapping ---
+    # Assuming the rows of X correspond to the sorted unique modularity classes, 
+    # as this is the safest assumption without the internal corpus dictionary.
+    cluster_ids = sorted(df['Modularity_class'].unique())
+    
+    if len(cluster_ids) != X.shape[0]:
+        print(f"Warning: Matrix rows ({X.shape[0]}) do not match unique cluster IDs ({len(cluster_ids)}). Using sequential numbering.")
+        cluster_ids = list(range(X.shape[0]))
+
+
     for i in range(X.shape[0]):
+        cluster_id = cluster_ids[i]
+        
+        # 1. Prepare Scores
+        # Convert sparse row matrix to a dense array for the current cluster
         cluster_vector = X[i].toarray().flatten()
         
+        # Map scores back to canonical keyword names
         scores = pd.Series(cluster_vector, index=feature_names)
+        # Filter for scores > 0 and sort by score (TF-IDF value)
         scores = scores[scores > 0].sort_values(ascending=False)
-        with open(OUT_DIR/f"cluster_{i}_histogram.csv") as file:
-            file.write()
-            file.write()
+        
+        # 2. Save Full Results to CSV
+        csv_path = OUT_DIR / f"cluster_{cluster_id}_tfidf_scores.csv"
+        
+        # Create a DataFrame for the output
+        df_output = pd.DataFrame({
+            "canonical_keyword": scores.index,
+            "tfidf_score": scores.values
+        })
+        
+        # Use str.title() for presentation purposes, if desired
+        df_output["canonical_keyword"] = df_output["canonical_keyword"].str.title()
+        
+        df_output.to_csv(csv_path, index=False)
+        print(f"Saved TF-IDF scores CSV for Cluster {cluster_id} to: {csv_path.name}")
+        
+        # 3. Create Histogram (Bar Plot)
+        top = df_output.head(top_n)
+        
+        if top.empty:
+            print(f"No TF-IDF scores found for Cluster {cluster_id}, skipping plot.")
+            continue
+            
+        labels = top['canonical_keyword'].tolist()[::-1] # Keywords for Y-axis, reversed
+        values = top['tfidf_score'].tolist()[::-1]      # Scores for X-axis, reversed
+
+        # Set up plot size (dynamic height based on number of keywords)
+        plt.figure(figsize=(10, max(4, len(labels) * 0.35)))
+        
+        # Create a basic horizontal bar chart
+        plt.barh(labels, values, color='#1f77b4') # Default blue color
+        
+        plt.xlabel('TF-IDF Score')
+        plt.title(f"Top {top_n} Canonical Keywords - Cluster {cluster_id}")
+        
+        # Adjust layout to fit long labels
+        plt.tight_layout()
+
+        # Save the plot
+        png_path = OUT_DIR / f"cluster_{cluster_id}_tfidf_histogram.png"
+        plt.savefig(png_path, dpi=150)
+        plt.close() # Close the plot figure to free up memory
+
+        print(f"Saved TF-IDF histogram for Cluster {cluster_id} to: {png_path.name}")
 
 def normalize_keyword(keyword: str) -> str:
     """Normalize a keyword to lowercase."""
