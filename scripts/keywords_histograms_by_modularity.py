@@ -18,7 +18,7 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
+SYNONYMS_THRESHOLD = 0.97
 # Mapping provided by the user: keys are modularity class ids (ints)
 MODULARITY_META = {
     2: {
@@ -235,7 +235,7 @@ def make_histograms(gexf_path: Path, out_dir: Path, top_n: int = 30):
     out_dir.mkdir(parents=True, exist_ok=True)
     
     # 1. Load Synonym Data and Create Map
-    synonym_dict_path =  Path('embedding_keywords')/"keyword_synonyms_0.99_with_transitivity.json"
+    synonym_dict_path =  Path(f'embedding_keywords')/f"keyword_synonyms_{SYNONYMS_THRESHOLD}_with_transitivity.json"
     synonym_data = load_synonym_data(synonym_dict_path)
     if not synonym_data:
         print("Cannot proceed without synonym data.")
@@ -414,15 +414,15 @@ def main(argv):
     if not gexf_path.exists():
         print(f"GEXF file not found: {gexf_path}")
         return 1
-    out_dir = Path(argv[2]) if len(argv) > 2 else gexf_path.parent / "keywords_histograms"
+    out_dir = Path(argv[2]) if len(argv) > 2 else gexf_path.parent / f"keywords_histograms_{SYNONYMS_THRESHOLD}"
     
     # Check for required files
     if not Path("keyword_classification_25_categories.csv").exists():
         print("Error: Required classification file 'keyword_classification_25_categories.csv' not found.")
         return 1
         
-    if not  Path('embedding_keywords',"keyword_synonyms_0.99_with_transitivity.json").exists(): # Check for the new JSON file
-        print("Error: Required synonym dictionary file 'synonym_dict.json' not found.")
+    if not  Path(f'embedding_keywords',f"keyword_synonyms_{SYNONYMS_THRESHOLD}_with_transitivity.json").exists(): # Check for the new JSON file
+        print("Error: Required synonym dictionary file 'keyword_synonyms_{SYNONYMS_THRESHOLD}_with_transitivity.json' not found.")
         return 1
         
     # --- Execute the histogram generation ---
@@ -434,5 +434,3 @@ if __name__ == '__main__':
     # Your original main execution block, modified for the current environment.
     # To run this script, you would execute it with the path to your GEXF file.
     raise SystemExit(main(sys.argv))
-    print("\nScript prepared! This code is now ready to be run in your environment.")
-    print("Execute it with the path to your GEXF graph file as the first argument (e.g., python script.py my_graph.gexf).")
