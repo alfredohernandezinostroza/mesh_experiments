@@ -1,3 +1,4 @@
+# td-idf_per_cluster_claude.py
 import re
 import pandas as pd
 import numpy as np
@@ -8,102 +9,37 @@ from collections import defaultdict, Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 import matplotlib.pyplot as plt
 
-OUT_DIR = Path("td-idf_results")
+SYNONYMS_THRESHOLD = 0.99
+OUT_DIR = Path(f"td-idf_results-per-cluster-{SYNONYMS_THRESHOLD}-claude-only-cluster-mean")
 OUT_DIR.mkdir(exist_ok=True)
 
-def save_results(X, vectorizer, df, top_n=20):
-    """
-    Calculates the TF-IDF scores for each cluster, saves the full results
-    to a CSV, and generates a histogram for the top N keywords.
-    """
-    print("\n--- Generating TF-IDF Histograms and CSVs ---")
-    
-    feature_names = vectorizer.get_feature_names_out()
-    
-    # --- Robust Cluster ID Mapping ---
-    # Assuming the rows of X correspond to the sorted unique modularity classes, 
-    # as this is the safest assumption without the internal corpus dictionary.
-    cluster_ids = sorted(df['Modularity_class'].unique())
-    
-    if len(cluster_ids) != X.shape[0]:
-        print(f"Warning: Matrix rows ({X.shape[0]}) do not match unique cluster IDs ({len(cluster_ids)}). Using sequential numbering.")
-        cluster_ids = list(range(X.shape[0]))
-
-
-    for i in range(X.shape[0]):
-        cluster_id = cluster_ids[i]
-        
-        # 1. Prepare Scores
-        # Convert sparse row matrix to a dense array for the current cluster
-        cluster_vector = X[i].toarray().flatten()
-        
-        # Map scores back to canonical keyword names
-        scores = pd.Series(cluster_vector, index=feature_names)
-        # Filter for scores > 0 and sort by score (TF-IDF value)
-        scores = scores[scores > 0].sort_values(ascending=False)
-        
-        # 2. Save Full Results to CSV
-        csv_path = OUT_DIR / f"cluster_{cluster_id}_tfidf_scores.csv"
-        
-        # Create a DataFrame for the output
-        df_output = pd.DataFrame({
-            "canonical_keyword": scores.index,
-            "tfidf_score": scores.values
-        })
-        
-        # Use str.title() for presentation purposes, if desired
-        df_output["canonical_keyword"] = df_output["canonical_keyword"].str.title()
-        
-        df_output.to_csv(csv_path, index=False)
-        print(f"Saved TF-IDF scores CSV for Cluster {cluster_id} to: {csv_path.name}")
-        
-        # 3. Create Histogram (Bar Plot)
-        top = df_output.head(top_n)
-        
-        if top.empty:
-            print(f"No TF-IDF scores found for Cluster {cluster_id}, skipping plot.")
-            continue
-            
-        labels = top['canonical_keyword'].tolist()[::-1] # Keywords for Y-axis, reversed
-        values = top['tfidf_score'].tolist()[::-1]      # Scores for X-axis, reversed
-
-        # Set up plot size (dynamic height based on number of keywords)
-        plt.figure(figsize=(10, max(4, len(labels) * 0.35)))
-        
-        # Create a basic horizontal bar chart
-        plt.barh(labels, values, color='#1f77b4') # Default blue color
-        
-        plt.xlabel('TF-IDF Score')
-        plt.title(f"Top {top_n} Canonical Keywords - Cluster {cluster_id}")
-        
-        # Adjust layout to fit long labels
-        plt.tight_layout()
-
-        # Save the plot
-        png_path = OUT_DIR / f"cluster_{cluster_id}_tfidf_histogram.png"
-        plt.savefig(png_path, dpi=150)
-        plt.close() # Close the plot figure to free up memory
-
-        print(f"Saved TF-IDF histogram for Cluster {cluster_id} to: {png_path.name}")
+MODULARITY_META = {
+    2: {"displaylabel": "Basic: Adaptation", "label": "Basic: Adaptation", "color": "#9A9CFF"},
+    7: {"displaylabel": "Applied: Feedback and\ntraining scheduling", 
+        "label": "Applied: Feedback and\ntraining scheduling", "color": "#FF891B"},
+    12: {"displaylabel": "Cognitive Approach", "label": "Cognitive Approach", "color": "#FF6587"},
+    15: {"displaylabel": "Applied: Motivation\nand Attention", 
+         "label": "Applied: Motivation\nand Attention", "color": "#FC001C"},
+    11: {"displaylabel": "Basic: Sequence Learning", 
+         "label": "Basic: Sequence Learning", "color": "#0018FF"},
+    6: {"displaylabel": "Basic: Motor Cortex", "label": "Basic: Motor Cortex", "color": "#54D3FF"},
+    5: {"displaylabel": "Basic: Basal Ganglia", "label": "Basic: Basal Ganglia", "color": "#32AC7C"},
+    1: {"displaylabel": "Basic: Cerebellum", "label": "Basic: Cerebellum", "color": "#00A50F"},
+    10: {"displaylabel": "Nameless cluster", "label": "Nameless cluster", "color": "#B6D315"},
+}
 
 def normalize_keyword(keyword: str) -> str:
     """Normalize a keyword to lowercase."""
     return keyword.lower()
 
 def split_keywords(keywords_value: str):
-    """Split a keywords string into individual keywords. Returns list of cleaned keywords.
-    
-    Keywords are split only by commas that are NOT inside parentheses or square brackets.
-    """
-    if keywords_value is None:
-        return []
-    if pd.isna(keywords_value):
+    """Split a keywords string into individual keywords."""
+    if keywords_value is None or pd.isna(keywords_value):
         return []
     s = str(keywords_value).strip()
     if not s:
         return []
     
-    # Split by commas that are not inside parentheses or square brackets
     parts = []
     current = []
     paren_depth = 0
@@ -122,7 +58,6 @@ def split_keywords(keywords_value: str):
             bracket_depth -= 1
             current.append(char)
         elif char == ',' and paren_depth == 0 and bracket_depth == 0:
-            # this is a delimiter comma
             part = ''.join(current).strip()
             if part:
                 parts.append(part)
@@ -130,7 +65,6 @@ def split_keywords(keywords_value: str):
         else:
             current.append(char)
     
-    # add remaining part
     if current:
         part = ''.join(current).strip()
         if part:
@@ -138,11 +72,10 @@ def split_keywords(keywords_value: str):
     
     return parts
 
-# --- New Function to Load Synonym Data ---
 def load_synonym_data(json_path: Path) -> dict:
     """Load the synonym dictionary from a JSON file."""
     if not json_path.exists():
-        print(f"Error: Synonym dictionary file not found at {json_path}. Please create it.")
+        print(f"Error: Synonym dictionary file not found at {json_path}")
         return {}
     
     try:
@@ -151,164 +84,211 @@ def load_synonym_data(json_path: Path) -> dict:
         print(f"Loaded {len(synonym_dict)} synonym groups from {json_path.name}.")
         return synonym_dict
     except Exception as e:
-        print(f"Error reading or processing {json_path}: {e}")
+        print(f"Error reading {json_path}: {e}")
         return {}
-# ----------------------------------------
 
 def load_synonym_map(synonym_dict: dict) -> dict:
     """
-    Creates a canonical keyword map where all synonyms point to a single
-    chosen representative (the normalized name of the original dictionary key).
-    The keys and values in the map are normalized (lowercase).
+    Creates a canonical keyword map with better handling of circular references.
+    Chooses the shortest term as canonical to prefer simpler forms.
     """
     canonical_map = {}
     
+    # First pass: identify all unique terms and group them
+    term_groups = {}
     for key, values in synonym_dict.items():
-        # The key is chosen as the canonical form for that group
-        canonical_name = normalize_keyword(key)
-        
-        # Variants include the key itself and all listed values
         all_variants = [key] + values
+        # Normalize all variants
+        norm_variants = [normalize_keyword(v) for v in all_variants]
         
-        for variant in all_variants:
-            norm_variant = normalize_keyword(variant)
-            # Only set the canonical map if the variant hasn't been mapped yet.
-            # This ensures that if 'A': ['B'] and 'C': ['D'] overlap, 
-            # the first one encountered sets the canonical name.
+        # Find shortest normalized form as canonical
+        canonical = min(norm_variants, key=len)
+        
+        for norm_variant in norm_variants:
             if norm_variant not in canonical_map:
-                 canonical_map[norm_variant] = canonical_name
+                canonical_map[norm_variant] = canonical
+            elif canonical_map[norm_variant] != canonical:
+                # Handle conflicts: keep the shorter canonical form
+                existing = canonical_map[norm_variant]
+                if len(canonical) < len(existing):
+                    canonical_map[norm_variant] = canonical
     
     return canonical_map
-# ------------------------------------------
+
 def calculate_canonical_tfidf(gexf_file: str, synonym_dict_path: Path):
-    
+    """
+    Calculate TF-IDF scores at the paper level, then aggregate by cluster.
+    """
     # 1. Load Data
     print(f"Reading GEXF file: {gexf_file}")
     G = nx.read_gexf(gexf_file)
     keywords = nx.get_node_attributes(G, "keywords")
     modularity_classes = nx.get_node_attributes(G, "modularity_class")
+    
     data_list = []
     for node_id in G.nodes():
         data_list.append({
-            'ID_String': node_id,         # Column 1
-            'Keywords': keywords.get(node_id),  # Column 2 (Set/List)
-            'Modularity_class': modularity_classes.get(node_id) # Column 3 (Scalar)
+            'ID_String': node_id,
+            'Keywords': keywords.get(node_id),
+            'Modularity_class': modularity_classes.get(node_id)
         })
     df = pd.DataFrame(data_list)
-    df = df.dropna().reset_index()
-    # 2. Load and Prepare Synonym Map
+    # df.drop(df[df['Weight'] < 185].index)
+    df = df.drop(df[df['Keywords'].isin(["Unknown keywords"])].index)
+    df = df[df["Modularity_class"].isin(MODULARITY_META)]
+    df = df.dropna().reset_index(drop=True)
+    
+    print(f"Loaded {len(df)} papers from GEXF")
+    
+    # 2. Load Synonym Map
     print(f"Loading synonym data from: {synonym_dict_path}")
     synonym_data = load_synonym_data(synonym_dict_path)
     synonym_map = load_synonym_map(synonym_data)
     
-    # 3. Initialize QA Log
-    # Maps: Raw Term -> Canonical Term
-    qa_log = {} 
+    # 3. Build Paper-Level Corpus (EACH PAPER IS A DOCUMENT)
+    print("Building paper-level corpus with canonical keywords...")
+    paper_corpus = []
+    paper_clusters = []
+    qa_log = {}
+    all_canonical_keywords = set()
     
-    # 4. Rewrite Corpus using Canonical Keywords
-    print("Rewriting corpus using canonical keywords...")
-    canonical_corpus = {}
-    all_canonical_keywords = set([])
-
-    for raw_keywords_str, modularity_class in zip(df['Keywords'], df['Modularity_class']):
-        if not canonical_corpus.get(modularity_class):
-            canonical_corpus[modularity_class] = []
-            
-        # a. Split the raw string into individual keywords
-        # Use a defaultdict here to track processing per paper
-        terms = split_keywords(raw_keywords_str)
+    for idx, row in df.iterrows():
+        raw_keywords_str = row['Keywords']
+        modularity_class = row['Modularity_class']
         
-        # b. Normalize each term and map it to its canonical form
+        terms = split_keywords(raw_keywords_str)
         canonical_terms = []
         
         for raw_term in terms:
-            norm_term = normalize_keyword(raw_term)            
-            # Use the canonical map, falling back to the term itself if not found
+            norm_term = normalize_keyword(raw_term)
             canonical_term = synonym_map.get(norm_term, norm_term)
             canonical_terms.append(canonical_term)
-            all_canonical_keywords.update([canonical_term])
+            all_canonical_keywords.add(canonical_term)
             
-            canonical_corpus[modularity_class].append(canonical_term)
-            
-            # --- QA Logging ---
-            # Log the mapping: Raw Term (original case/form) -> Canonical Term
-            # This helps track exactly what came from the GEXF and what it became.
+            # QA Logging
             if raw_term not in qa_log:
                 qa_log[raw_term] = canonical_term
-            # Optional: Check for inconsistent mapping (if the same raw_term somehow maps to different canonical_terms)
             elif qa_log[raw_term] != canonical_term:
-                print(f"Warning: Inconsistent canonical mapping detected for raw term '{raw_term}'. Mapped to '{qa_log[raw_term]}' and now '{canonical_term}'.")
-
-            
-         # c. Reconstruct the document string using canonical terms, separated by spaces
-        # The TfidfVectorizer will treat each space-separated canonical term as a feature (token)
-        # canonical_doc = "\t".join(canonical_terms)
-        # canonical_corpus[modularity_class].append(canonical_doc)
+                print(f"Warning: Inconsistent mapping for '{raw_term}': "
+                      f"'{qa_log[raw_term]}' vs '{canonical_term}'")
         
+        # Each paper becomes ONE document (tab-separated canonical keywords)
+        paper_doc = "\t".join(canonical_terms)
+        paper_corpus.append(paper_doc)
+        paper_clusters.append(modularity_class)
     
-    for key, values in canonical_corpus.items():
-        canonical_corpus[key] = "\t".join(values)
-
-    # 5. Save the QA Log file
-    out_dir = Path("td-idf_results")
-    out_dir.mkdir(exist_ok=True)
-
-    qa_log_path = out_dir/"qa_canonical_keyword_mapping.json"
-    print(f"\nSaving QA log to: {qa_log_path}")
+    print(f"Created corpus of {len(paper_corpus)} paper documents")
     
-    # Sort for cleaner presentation
-    sorted_qa_log = dict(sorted(qa_log.items()))
-    
+    # 4. Save QA Logs
+    qa_log_path = OUT_DIR / "qa_canonical_keyword_mapping.json"
     with open(qa_log_path, 'w', encoding='utf-8') as f:
-        json.dump(sorted_qa_log, f, indent=4, ensure_ascii=False)
-    print(f"Total unique raw keywords processed and logged: {len(qa_log)}")
-
-    # 5.1 Generate QA report: all unique CANONICAL keywords processed
-    # all_keywords = set(canonical_corpus)
-    all_keywords_sorted = sorted(all_canonical_keywords)
-    qa_path = out_dir / "all_canonical_keywords_processed.txt"
-    with open(qa_path, 'w') as f:
-        f.write(f"Total unique CANONICAL keywords processed: {len(all_keywords_sorted)}\n")
-        f.write("=" * 80 + "\n\n")
-        for kw in all_keywords_sorted:  
-            f.write(f"{kw.title()}\n")
-    print(f"\nQA report saved to: {qa_path}")
-
-
-    # 6. Apply TfidfVectorizer to the Canonical Corpus
-    print("\nFitting TfidfVectorizer to the canonical corpus...")
+        json.dump(dict(sorted(qa_log.items())), f, indent=4, ensure_ascii=False)
+    print(f"Saved QA log: {len(qa_log)} unique raw keywords")
     
+    qa_path = OUT_DIR / "all_canonical_keywords_processed.txt"
+    with open(qa_path, 'w') as f:
+        f.write(f"Total unique CANONICAL keywords: {len(all_canonical_keywords)}\n")
+        f.write("=" * 80 + "\n\n")
+        for kw in sorted(all_canonical_keywords):
+            f.write(f"{kw.title()}\n")
+    print(f"Saved canonical keywords list: {len(all_canonical_keywords)} keywords")
+    
+    # 5. Calculate TF-IDF at Paper Level
+    print("\nCalculating TF-IDF at paper level...")
     vectorizer = TfidfVectorizer(
-        tokenizer=lambda x: x.split('\t'), 
-        token_pattern=None,              
-        lowercase=False                  
+        tokenizer=lambda x: x.split('\t'),
+        token_pattern=None,
+        lowercase=False
     )
     
-    X = vectorizer.fit_transform(canonical_corpus.values())
+    X = vectorizer.fit_transform(paper_corpus)
+    feature_names = vectorizer.get_feature_names_out()
+    print(f"TF-IDF matrix shape: {X.shape} (papers x keywords)")
+    print(f"Total unique canonical keywords in corpus: {len(feature_names)}")
     
-    # 7. Output Results (Rest of the script remains the same)
-    print("\n--- Results ---")
+    # 6. Aggregate TF-IDF Scores by Cluster
+    print("\nAggregating TF-IDF scores by cluster...")
+    df['cluster'] = paper_clusters
+    
+    cluster_tfidf = {}
+    for cluster_id in df['cluster'].unique():
+        # Get indices of papers in this cluster
+        cluster_mask = df['cluster'] == cluster_id
+        cluster_indices = df[cluster_mask].index.tolist()
+        
+        # Sum TF-IDF scores across all papers in cluster
+        cluster_vector = X[cluster_indices].mean(axis=0).A1
+        cluster_tfidf[cluster_id] = cluster_vector
+    
+    # Convert to matrix format (clusters x keywords)
+    cluster_ids = sorted(cluster_tfidf.keys())
+    X_clustered = np.vstack([cluster_tfidf[cid] for cid in cluster_ids])
+    
+    print(f"Aggregated to {len(cluster_ids)} clusters")
+    
+    return X_clustered, vectorizer, cluster_ids
+
+def sanitize_filename(name):
+    """Sanitizes a string for use as a filename."""
+    name = str(name).replace('\n', ' ')
+    name = re.sub(r'[\\/*?:"<>|]', "", name)
+    return re.sub(r'\s+', '_', name).strip()
+
+def save_results(X, vectorizer, cluster_ids, MODULARITY_META, top_n=20):
+    """
+    Save TF-IDF results per cluster with histograms.
+    """
+    print("\n--- Generating TF-IDF Histograms and CSVs ---")
     
     feature_names = vectorizer.get_feature_names_out()
-    print(f"Total unique canonical keywords (features): {len(feature_names)}")
     
-    # Show example (first cluster)
-    if X.shape[0] > 0:        
-        cluster_vector = X[0].toarray().flatten()
+    for i, cluster_id in enumerate(cluster_ids):
+        meta = MODULARITY_META.get(cluster_id, {})
+        display_label = meta.get('displaylabel', f"Cluster {cluster_id}")
+        plot_color = meta.get('color', '#1f77b4')
         
+        # Get scores for this cluster
+        cluster_vector = X[i]
         scores = pd.Series(cluster_vector, index=feature_names)
         scores = scores[scores > 0].sort_values(ascending=False)
         
-        print(f"Highest TD-IDF scores (first cluster):\n{scores.head(10)}")
-        print(f"\nSum of TD-IDF scores for the first cluster (normalized L2 norm): {np.sum(cluster_vector**2)}")
-    
-    return X, vectorizer, df
+        # Save CSV
+        file_label = sanitize_filename(meta.get('label', f'{cluster_id}'))
+        csv_path = OUT_DIR / f"cluster_{cluster_id}_{file_label}_tfidf_scores.csv"
+        
+        df_output = pd.DataFrame({
+            "canonical_keyword": scores.index,
+            "tfidf_score": scores.values
+        })
+        df_output["canonical_keyword"] = df_output["canonical_keyword"].str.title()
+        df_output.to_csv(csv_path, index=False)
+        print(f"Saved CSV for {display_label}: {csv_path.name}")
+        
+        # Create Histogram
+        top = df_output.head(top_n)
+        if top.empty:
+            print(f"No scores for {display_label}, skipping plot")
+            continue
+        
+        labels = top['canonical_keyword'].tolist()[::-1]
+        values = top['tfidf_score'].tolist()[::-1]
+        
+        plt.figure(figsize=(10, max(4, len(labels) * 0.35)))
+        plt.barh(labels, values, color=plot_color)
+        plt.xlabel('TF-IDF Score (Summed Across Papers)')
+        plt.title(f"{display_label}\nTop {top_n} Keywords", loc='left')
+        plt.tight_layout()
+        
+        png_path = OUT_DIR / f"cluster_{cluster_id}_{file_label}_tfidf_histogram.png"
+        plt.savefig(png_path, dpi=150)
+        plt.close()
+        print(f"Saved histogram: {png_path.name}")
 
+# Main execution
 gexf_file = "filtered_with_transferred_mesh_fixed_fix_commas.gexf"
-synonym_dict_path = Path('embedding_keywords')/"keyword_synonyms_0.99_with_transitivity.json"
+synonym_dict_path = Path('embedding_keywords') / f"keyword_synonyms_{SYNONYMS_THRESHOLD}_with_transitivity.json"
 
+X_matrix, vectorizer_model, cluster_list = calculate_canonical_tfidf(gexf_file, synonym_dict_path)
+save_results(X_matrix, vectorizer_model, cluster_list, MODULARITY_META)
 
-X_matrix, vectorizer_model, dataframe = calculate_canonical_tfidf(gexf_file, synonym_dict_path)
-save_results(X_matrix, vectorizer_model, dataframe)
-
-print("Script execution successful")
+print("\nScript execution successful!")
