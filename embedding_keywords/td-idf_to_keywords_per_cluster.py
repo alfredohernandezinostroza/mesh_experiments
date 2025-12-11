@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import matplotlib.pyplot as plt
 
 SYNONYMS_THRESHOLD = 0.99
-OUT_DIR = Path(f"td-idf_results-per-cluster-{SYNONYMS_THRESHOLD}-claude-only-cluster-mean")
+OUT_DIR = Path(f"td-idf_results-per-cluster-{SYNONYMS_THRESHOLD}-claude-only-cluster-mean-top-3")
 OUT_DIR.mkdir(exist_ok=True)
 
 MODULARITY_META = {
@@ -133,7 +133,7 @@ def calculate_canonical_tfidf(gexf_file: str, synonym_dict_path: Path):
             'Modularity_class': modularity_classes.get(node_id)
         })
     df = pd.DataFrame(data_list)
-    # df.drop(df[df['Weight'] < 185].index)
+    # Filtering
     df = df.drop(df[df['Keywords'].isin(["Unknown keywords"])].index)
     df = df[df["Modularity_class"].isin(MODULARITY_META)]
     df = df.dropna().reset_index(drop=True)
@@ -216,7 +216,7 @@ def calculate_canonical_tfidf(gexf_file: str, synonym_dict_path: Path):
         cluster_mask = df['cluster'] == cluster_id
         cluster_indices = df[cluster_mask].index.tolist()
         
-        # Sum TF-IDF scores across all papers in cluster
+        # mean TF-IDF scores across all papers in cluster
         cluster_vector = X[cluster_indices].mean(axis=0).A1
         cluster_tfidf[cluster_id] = cluster_vector
     
@@ -275,7 +275,7 @@ def save_results(X, vectorizer, cluster_ids, MODULARITY_META, top_n=20):
         
         plt.figure(figsize=(10, max(4, len(labels) * 0.35)))
         plt.barh(labels, values, color=plot_color)
-        plt.xlabel('TF-IDF Score (Summed Across Papers)')
+        plt.xlabel('TF-IDF Score (Mean Across Papers)') # Note: Updated label for clarity
         plt.title(f"{display_label}\nTop {top_n} Keywords", loc='left')
         plt.tight_layout()
         
@@ -283,12 +283,110 @@ def save_results(X, vectorizer, cluster_ids, MODULARITY_META, top_n=20):
         plt.savefig(png_path, dpi=150)
         plt.close()
         print(f"Saved histogram: {png_path.name}")
+    
+    # Return the aggregated top scores for the combined plot
+    return _aggregate_top_scores(X, vectorizer, cluster_ids, MODULARITY_META, top_n=3)
+
+
+def _aggregate_top_scores(X, vectorizer, cluster_ids, MODULARITY_META, top_n=3):
+    """
+    Helper function to aggregate the top N scores and their metadata for all clusters.
+    """
+    feature_names = vectorizer.get_feature_names_out()
+    combined_scores = []
+
+    for i, cluster_id in enumerate(cluster_ids):
+        meta = MODULARITY_META.get(cluster_id, {})
+        display_label = meta.get('displaylabel', f"Cluster {cluster_id}")
+        plot_color = meta.get('color', '#1f77b4')
+
+        # Get scores for this cluster
+        cluster_vector = X[i]
+        scores = pd.Series(cluster_vector, index=feature_names)
+        scores = scores[scores > 0].sort_values(ascending=False)
+        
+        # Get top N scores
+        top_n_scores = scores.head(top_n)
+
+        for rank, (keyword, score) in enumerate(top_n_scores.items()):
+            combined_scores.append({
+                'cluster_id': cluster_id,
+                'cluster_label': display_label.replace('\n', ' '),
+                'cluster_color': plot_color,
+                'keyword': keyword.title(),
+                'score': score,
+                'rank': rank + 1
+            })
+            
+    return combined_scores
+
+
+def plot_top_three_scores_combined(combined_scores_data, MODULARITY_META):
+    """
+    Plots the top 3 scores of each cluster with its respective color all in one plot.
+    """
+    if not combined_scores_data:
+        print("No combined scores data to plot.")
+        return
+
+    # Create a DataFrame for easier manipulation and sorting
+    df_combined = pd.DataFrame(combined_scores_data)
+    
+    # Sort by cluster label (for grouping) and then by score (for order within group)
+    df_combined['sort_label'] = df_combined['cluster_label'].str.split(':').str[-1].str.strip() # Sort by the second part of the label
+    df_combined = df_combined.sort_values(by=['sort_label', 'score'], ascending=[False, True])
+    df_combined = df_combined.drop(columns=['sort_label'])
+
+    # Create the label for the Y-axis: "Keyword (Cluster Label)"
+    df_combined['plot_label'] = df_combined.apply(
+        lambda row: f"{row['keyword']} ({row['cluster_label']})", axis=1
+    )
+    
+    labels = df_combined['plot_label'].tolist()
+    values = df_combined['score'].tolist()
+    colors = df_combined['cluster_color'].tolist()
+    
+    # Use cluster labels for the legend
+    legend_handles = [
+        plt.Rectangle((0, 0), 1, 1, fc=meta['color'])
+        for cluster_id, meta in sorted(MODULARITY_META.items())
+        if cluster_id in df_combined['cluster_id'].unique()
+    ]
+    legend_labels = [
+        meta['displaylabel'].replace('\n', ' ')
+        for cluster_id, meta in sorted(MODULARITY_META.items())
+        if cluster_id in df_combined['cluster_id'].unique()
+    ]
+    
+    # Plotting
+    plt.figure(figsize=(12, max(6, len(labels) * 0.4)))
+    plt.barh(labels, values, color=colors)
+    
+    plt.xlabel('TF-IDF Score (Mean Across Papers)')
+    plt.title('Top 3 Canonical Keywords by Cluster', loc='left')
+    
+    # Add legend
+    plt.legend(legend_handles, legend_labels, title="Cluster", loc='lower right', framealpha=0.8)
+    
+    plt.tight_layout()
+    
+    png_path = OUT_DIR / "combined_top_3_tfidf_histogram.png"
+    plt.savefig(png_path, dpi=150)
+    plt.close()
+    print(f"\nSaved combined top 3 histogram: {png_path.name}")
+
 
 # Main execution
 gexf_file = "filtered_with_transferred_mesh_fixed_fix_commas.gexf"
 synonym_dict_path = Path('embedding_keywords') / f"keyword_synonyms_{SYNONYMS_THRESHOLD}_with_transitivity.json"
 
+# Calculate TF-IDF scores
 X_matrix, vectorizer_model, cluster_list = calculate_canonical_tfidf(gexf_file, synonym_dict_path)
-save_results(X_matrix, vectorizer_model, cluster_list, MODULARITY_META)
+
+# Save individual cluster results and get aggregated top 3 scores
+top_three_scores = save_results(X_matrix, vectorizer_model, cluster_list, MODULARITY_META)
+
+# Plot the combined top 3 scores
+plot_top_three_scores_combined(top_three_scores, MODULARITY_META)
 
 print("\nScript execution successful!")
